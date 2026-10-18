@@ -35,6 +35,23 @@ class TestBatonRunner(unittest.TestCase):
         self.assertEqual(data["tier3"], 3)
         self.assertEqual(data["empty"], 3, "no files must never skip the tests")
 
+    def test_missing_specs(self):
+        code = """
+        import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+        import { tmpdir } from 'node:os';
+        import { join } from 'node:path';
+        import { missingSpecs } from './scripts/baton.mjs';
+        const root = mkdtempSync(join(tmpdir(), 'specs-'));
+        mkdirSync(join(root, 'docs/specs'), { recursive: true });
+        writeFileSync(join(root, 'docs/PLAN.md'), '[a](specs/here.md) [b](specs/gone.md#x)');
+        writeFileSync(join(root, 'docs/specs/here.md'), '');
+        writeFileSync(join(root, 'project-blueprint.json'), JSON.stringify({ project: { source_spec: 'docs/specs/nope.md' } }));
+        console.log(JSON.stringify(missingSpecs(root)));
+        """
+        res = self.run_node_eval(code)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertEqual(json.loads(res.stdout), ["docs/specs/gone.md", "docs/specs/nope.md"])
+
     def test_circuit_breaker(self):
         code = """
         import { checkCircuitBreaker } from './scripts/baton.mjs';

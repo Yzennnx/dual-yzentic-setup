@@ -512,10 +512,10 @@ class TestGatekeeper(unittest.TestCase):
         root = self.make_fixture(FAIL)  # no tests changed and the tests fail: a write launch, then a diagnosis launch
         self.baton(root)
         write, diagnose = self.launches()
-        self.assertEqual(write[write.index("--model") + 1], "gemini-3.8-flash-high")
-        self.assertEqual(diagnose[diagnose.index("--model") + 1], "gemini-3.8-flash-low")
+        self.assertEqual(write[write.index("--model") + 1], "gemini-4-argon-medium")
+        self.assertEqual(diagnose[diagnose.index("--model") + 1], "gemini-4-argon-medium")
         models = [entry["model"] for entry in self.state(root)["delegations"]]
-        self.assertEqual(models, ["gemini-3.8-flash-high", "gemini-3.8-flash-low"])
+        self.assertEqual(models, ["gemini-4-argon-medium", "gemini-4-argon-medium"])
 
     def test_the_diagnosis_prompt_names_the_artifact_folders_that_exist(self):
         root = self.make_fixture(FAIL, changes={"src/app.js": "module.exports = 1;\n", "tests/app.test.js": "// test\n"})

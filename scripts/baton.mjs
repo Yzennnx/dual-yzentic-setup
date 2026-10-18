@@ -174,6 +174,22 @@ export function resolveTestExecution(tier, scope, verify = null) {
   return { command: 'python3 tests/run_parallel.py', isExpress: false };
 }
 
+/**
+ * Spec paths that PLAN.md links (`](specs/...)`) or the blueprint names as source_spec but that do not exist on disk.
+ */
+export function missingSpecs(root) {
+  const missing = [];
+  try {
+    const plan = readFileSync(resolve(root, 'docs/PLAN.md'), 'utf-8');
+    for (const match of plan.matchAll(/\]\((specs\/[^)#\s]+)/g)) missing.push(`docs/${match[1]}`);
+  } catch { /* no plan */ }
+  try {
+    const spec = JSON.parse(readFileSync(resolve(root, 'project-blueprint.json'), 'utf-8')).project?.source_spec;
+    if (spec) missing.push(spec);
+  } catch { /* no blueprint */ }
+  return [...new Set(missing)].filter(path => !existsSync(resolve(root, path)));
+}
+
 const CLEAN_TREE_NOTE = '[Baton] Working tree clean: classifying the last commit.';
 
 /**
@@ -234,6 +250,8 @@ export async function main() {
     }
 
     const state = readSyncState(syncJson);
+
+    for (const path of missingSpecs(root)) console.warn(`[Baton] Warning: ${path} is linked from PLAN.md or the blueprint but missing.`);
 
     // Check circuit breaker
     if (!checkCircuitBreaker(state)) {

@@ -10,7 +10,7 @@ from tests import repo_fixture
 STUB = Path(__file__).resolve().parent / "stubs" / "agy_stub.mjs"
 BATON = repo_fixture.SCRIPTS / "baton.mjs"
 PROMPT = "do the thing"
-DEFAULT_ARGS = ["--print", PROMPT, "--output-format", "json", "--print-timeout", "30s", "--model", "gemini-3.8-flash-high"]
+DEFAULT_ARGS = ["--print", PROMPT, "--output-format", "json", "--print-timeout", "30s", "--model", "gemini-4-argon-medium"]
 
 
 class TestAgyLauncher(unittest.TestCase):
@@ -73,9 +73,9 @@ class TestAgyLauncher(unittest.TestCase):
     def test_model_for_each_job(self):
         jobs = ["scout", "diagnose", "write_tests", "review", "unknown"]
         cases = [
-            ({}, ["gemini-3.8-flash-low"] * 2 + ["gemini-3.8-flash-high"] * 3),
-            ({"BATON_AGY_MODEL_FAST": "fast-x"}, ["fast-x"] * 2 + ["gemini-3.8-flash-high"] * 3),
-            ({"BATON_AGY_MODEL_DEEP": "deep-x"}, ["gemini-3.8-flash-low"] * 2 + ["deep-x"] * 3),
+            ({}, ["gemini-4-argon-medium"] * 2 + ["gemini-4-argon-medium"] * 3),
+            ({"BATON_AGY_MODEL_FAST": "fast-x"}, ["fast-x"] * 2 + ["gemini-4-argon-medium"] * 3),
+            ({"BATON_AGY_MODEL_DEEP": "deep-x"}, ["gemini-4-argon-medium"] * 2 + ["deep-x"] * 3),
             ({"BATON_AGY_MODEL": "all-x", "BATON_AGY_MODEL_FAST": "fast-x", "BATON_AGY_MODEL_DEEP": "deep-x"}, ["all-x"] * 5),
         ]
         for env, expected in cases:
@@ -87,7 +87,7 @@ class TestAgyLauncher(unittest.TestCase):
                 self.assertEqual(self.snippet(body, env=env), expected)
 
     def test_the_entry_records_the_model(self):
-        self.assertEqual(self.launch()["entry"]["model"], "gemini-3.8-flash-high")
+        self.assertEqual(self.launch()["entry"]["model"], "gemini-4-argon-medium")
 
     def test_timeout_defaults_and_env_override(self):
         self.launch(timeout=None)

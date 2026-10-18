@@ -10,8 +10,8 @@ import { fileURLToPath } from 'node:url';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-const DEFAULT_MODEL_DEEP = 'gemini-3.8-flash-high';
-const DEFAULT_MODEL_FAST = 'gemini-3.8-flash-low';
+const DEFAULT_MODEL_DEEP = 'gemini-4-argon-medium';
+const DEFAULT_MODEL_FAST = 'gemini-4-argon-medium';
 const FAST_JOBS = ['scout', 'diagnose'];
 const DEFAULT_TIMEOUT_SECONDS = 600;
 const JOB_TIMEOUT_SECONDS = { review: 1200 }; // a review reads the whole branch and outlasts the other jobs

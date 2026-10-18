@@ -237,9 +237,9 @@ class TestReview(unittest.TestCase):
     def test_review_uses_the_deep_model_and_records_it(self):
         self.review()
         args = self.recorded_args()[0]
-        self.assertEqual(args[args.index("--model") + 1], "gemini-3.8-flash-high")
+        self.assertEqual(args[args.index("--model") + 1], "gemini-4-argon-medium")
         state = json.loads((self.root / ".agents" / "sync" / "handoff.json").read_text(encoding="utf-8"))
-        self.assertEqual(state["delegations"][0]["model"], "gemini-3.8-flash-high")
+        self.assertEqual(state["delegations"][0]["model"], "gemini-4-argon-medium")
 
 
 if __name__ == "__main__":

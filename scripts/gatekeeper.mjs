@@ -46,6 +46,7 @@ function buildWritePrompt(sources, { spec, testCommand, e2eCommand }) {
     'The Builder changed these source files and changed no tests:',
     ...sources.map(path => `- ${path}`),
     `Read ${spec ? `docs/PLAN.md and ${spec}` : 'docs/PLAN.md'} for the intended behaviour.`,
+    'DESIGN.md is current behaviour; older specs in docs/specs are history.',
     ...(testCommand ? [`The project runs its tests with: ${testCommand}. Write tests that suit that runner.`] : []),
     'Rules:',
     '- Write or update tests that cover the listed changes.',

@@ -142,8 +142,8 @@ npm run hook:install             # install the pre-commit hook
 | Variable | Effect |
 | :--- | :--- |
 | `BATON_GATEKEEPER=0` | Never launch Antigravity from `verify` (the pre-commit hook sets this). |
-| `BATON_AGY_MODEL_FAST` | Model for scout and diagnosis. Default `gemini-3.8-flash-low`. |
-| `BATON_AGY_MODEL_DEEP` | Model for test writing and review. Default `gemini-3.8-flash-high`. |
+| `BATON_AGY_MODEL_FAST` | Model for scout and diagnosis. Default `gemini-4-argon-medium`. |
+| `BATON_AGY_MODEL_DEEP` | Model for test writing and review. Default `gemini-4-argon-medium`. |
 | `BATON_AGY_MODEL` | One model for every launch, overriding both. |
 | `BATON_DIAGNOSE_MIN_LINES` | A failure longer than this many lines gets a diagnosis. Default `150`; `0` means always. |
 | `BATON_AGY_TIMEOUT` | Seconds before a launch is abandoned. Default `600`, and `1200` for a review. |

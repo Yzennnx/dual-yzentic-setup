@@ -47,6 +47,7 @@ class TestSyncSchema(unittest.TestCase):
         self.assertIsInstance(data["turn_count"], int)
         self.assertIsInstance(data["max_turns"], int)
         self.assertIsInstance(data["files_modified"], list)
+        self.assertIsInstance(data["tests_owed"], list)
 
     def test_status_generates_valid_handoff_json(self):
         self.baton("status")

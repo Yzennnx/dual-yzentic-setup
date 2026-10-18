@@ -11,7 +11,7 @@ from pathlib import Path
 
 MAX_WORKERS = 8
 # The pre-commit hook and some tests export these; a child must start from a clean environment.
-STRIPPED_PREFIXES = ("BATON_HOOK", "BATON_GATEKEEPER", "BATON_AGY_", "BATON_DIAGNOSE_MIN_LINES", "STUB_", "NPM_CONFIG_")
+STRIPPED_PREFIXES = ("BATON_HOOK", "BATON_DEBUG", "BATON_GATEKEEPER", "BATON_AGY_", "BATON_DIAGNOSE_MIN_LINES", "STUB_", "NPM_CONFIG_")
 
 
 def clean_env():

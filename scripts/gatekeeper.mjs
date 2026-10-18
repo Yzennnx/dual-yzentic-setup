@@ -29,18 +29,33 @@ export function shouldWriteTests({ tier, files, disabled = false }) {
 }
 
 /**
- * The blueprint's source spec, test command and e2e command; each is null when absent or the blueprint is unreadable.
+ * The blueprint's source spec, test command, e2e command and no-tests folders; each is null (or empty) when absent or the blueprint is unreadable.
  */
 function readProject(root) {
   try {
     const project = JSON.parse(readFileSync(resolve(root, 'project-blueprint.json'), 'utf-8')).project;
-    return { spec: project?.source_spec || null, testCommand: project?.verify?.test || null, e2eCommand: project?.verify?.e2e || null };
+    const noTestsIn = project?.verify?.no_tests_in;
+    return {
+      spec: project?.source_spec || null,
+      testCommand: project?.verify?.test || null,
+      e2eCommand: project?.verify?.e2e || null,
+      noTestsIn: Array.isArray(noTestsIn) ? noTestsIn : []
+    };
   } catch {
-    return { spec: null, testCommand: null, e2eCommand: null };
+    return { spec: null, testCommand: null, e2eCommand: null, noTestsIn: [] };
   }
 }
 
-function buildWritePrompt(sources, { spec, testCommand, e2eCommand }) {
+/**
+ * The prompt line that keeps test files out of folders the app bundles (empty when the blueprint lists none).
+ */
+function noTestsLine(noTestsIn) {
+  return noTestsIn.length > 0
+    ? [`Never create files under: ${noTestsIn.join(', ')}. They are route folders bundled into the app; put such tests beside them in the parent folder.`]
+    : [];
+}
+
+function buildWritePrompt(sources, { spec, testCommand, e2eCommand, noTestsIn }) {
   return [
     'You are the Gatekeeper of this repository (your role is defined in GEMINI.md).',
     'The Builder changed these source files and changed no tests:',
@@ -52,10 +67,28 @@ function buildWritePrompt(sources, { spec, testCommand, e2eCommand }) {
     '- Write or update tests that cover the listed changes.',
     '- Touch test files only.',
     '- Run nothing.',
+    ...noTestsLine(noTestsIn),
     '- Where the code contradicts the spec, test to the spec and say so in one line.',
     e2eCommand
       ? 'Write unit or component tests. Write an end-to-end test only when the change adds or alters a user journey named in the spec, and put it under e2e/.'
       : 'Write unit or component tests only. Do not write end-to-end or browser tests.',
+    PLAIN_PATHS_RULE
+  ].join('\n');
+}
+
+function buildRepairPrompt(tests, output, { noTestsIn }) {
+  return [
+    'You are the Gatekeeper of this repository (your role is defined in GEMINI.md).',
+    'You wrote these test files and they fail when run:',
+    ...tests.map(path => `- ${path}`),
+    'Distilled failure output:',
+    output,
+    'Rules:',
+    '- Where the test is wrong (a bad mock, an import, a hoisting problem, a wrong expectation or comparison), fix the test.',
+    '- Leave a test failing only if it exposes a real bug in the source, and say so in your reply in one line naming the file.',
+    '- Touch test files only.',
+    '- Run nothing.',
+    ...noTestsLine(noTestsIn),
     PLAIN_PATHS_RULE
   ].join('\n');
 }
@@ -105,6 +138,29 @@ export function writeTests({ root, state, files, saveState = () => {} }) {
   });
   const { testsWritten, outOfScope } = checkScope(before, snapshotChanges(root), { allowEdits: true });
   return { result: launch.ok ? 'ran' : 'skipped', testsWritten, outOfScope, reason: launch.reason, detail: launch.detail };
+}
+
+/**
+ * One repair round after the new tests failed their own run: Antigravity fixes its tests, or says the source is at fault.
+ * `output` is the distilled failure. The scope guard applies as it does for writing.
+ */
+export function repairTests({ root, state, tests, output, saveState = () => {} }) {
+  const before = snapshotChanges(root);
+  const launch = launchAsAntigravity(state, saveState, {
+    job: 'write_tests',
+    prompt: buildRepairPrompt(tests, output, readProject(root)),
+    allowEdits: true,
+    root
+  });
+  const { testsWritten, outOfScope } = checkScope(before, snapshotChanges(root), { allowEdits: true });
+  return {
+    result: launch.ok ? 'ran' : 'skipped',
+    testsWritten,
+    outOfScope,
+    reply: launch.ok ? String(launch.response ?? '').trim() : '',
+    reason: launch.reason,
+    detail: launch.detail
+  };
 }
 
 /**

@@ -63,7 +63,7 @@ class TestGatekeeper(unittest.TestCase):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding="utf-8", newline="\n")
 
-    def make_fixture(self, test_command=PASS, changes=None, commit=False, e2e=None):
+    def make_fixture(self, test_command=PASS, changes=None, commit=False, e2e=None, verify=None, project=None):
         """An initialized project committed once, then `changes` (path -> text) written without committing."""
         self.fixtures += 1
         fixture = Path(self.tmp.name) / f"fixture{self.fixtures}"
@@ -75,6 +75,8 @@ class TestGatekeeper(unittest.TestCase):
         blueprint["project"] = {"source_spec": SPEC, "verify": {"test": test_command}}
         if e2e is not None:
             blueprint["project"]["verify"]["e2e"] = e2e
+        blueprint["project"]["verify"].update(verify or {})
+        blueprint["project"].update(project or {})
         blueprint_path.write_text(json.dumps(blueprint, indent=2) + "\n", encoding="utf-8")
         repo_fixture.git_init(root)
         for rel, text in (changes if changes is not None else {"src/app.js": "module.exports = 1;\n"}).items():

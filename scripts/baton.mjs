@@ -10,8 +10,8 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
-import { isCosmeticFile, resolveChangeSet, fingerprintChanges } from './changes.mjs';
-import { gatekeeperDisabled, shouldWriteTests, writeTests, shouldDiagnose, diagnoseFailure, writeHandoff } from './gatekeeper.mjs';
+import { isCosmeticFile, isSourceFile, isTestFile, resolveChangeSet, fingerprintChanges } from './changes.mjs';
+import { gatekeeperDisabled, shouldWriteTests, writeTests, repairTests, shouldDiagnose, diagnoseFailure, writeHandoff } from './gatekeeper.mjs';
 import { describeFailure } from './agy.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,7 +41,8 @@ const DEFAULT_STATE = {
   max_turns: 5,
   last_updated: new Date().toISOString(),
   summary: 'Initialized',
-  files_modified: []
+  files_modified: [],
+  tests_owed: []
 };
 
 /**
@@ -104,19 +105,32 @@ export function distillDiagnostics(rawOutput) {
 }
 
 /**
+ * True when the repo-relative path starts with one of the prefixes.
+ */
+export function underAny(path, prefixes) {
+  return prefixes.some(prefix => path.startsWith(prefix));
+}
+
+/**
  * Auto-detect the execution tier based on touched files.
  * Tier 1: Express Lane (Micro/Cosmetic: CSS, markdown, static assets, docs)
  * Tier 2: Scoped Lane (Single component/module and/or its test file)
  * Tier 3: Architectural Deep Lane (DB schema, migrations, auth, multi-file features)
  * No files at all is never Tier 1: with nothing to classify, run the full suite.
+ * When the blueprint sets a non-empty `project.risky_paths`, the surface decides instead of the file count:
+ * all cosmetic is 1, any file under a risky prefix is 3, anything else is 2.
  */
-export function detectExecutionTier(modifiedFiles = []) {
+export function detectExecutionTier(modifiedFiles = [], riskyPaths = null) {
   if (!modifiedFiles || modifiedFiles.length === 0) {
     return 3;
   }
 
   if (modifiedFiles.every(isCosmeticFile)) {
     return 1;
+  }
+
+  if (Array.isArray(riskyPaths) && riskyPaths.length > 0) {
+    return modifiedFiles.some(file => underAny(file, riskyPaths)) ? 3 : 2;
   }
 
   const isArchitectural = modifiedFiles.some(file => 
@@ -144,6 +158,58 @@ export function readVerifyConfig(blueprintPath = BLUEPRINT_PATH) {
   } catch {
     return null;
   }
+}
+
+/**
+ * The blueprint's optional `project.risky_paths`: an array of path prefixes, or null.
+ */
+export function readRiskyPaths(blueprintPath = BLUEPRINT_PATH) {
+  try {
+    const paths = JSON.parse(readFileSync(blueprintPath, 'utf-8')).project?.risky_paths;
+    return Array.isArray(paths) && paths.length > 0 ? paths.filter(p => typeof p === 'string') : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The commands to run for the changed files when `verify.routes` is set: the distinct setups, then the distinct
+ * commands of every route whose paths match a changed file. `verify.test` is added when no route matches, or when a
+ * changed non-cosmetic file belongs to no route. Returns null when no routes are configured.
+ */
+export function planRoutes(files, verify) {
+  const routes = verify?.routes;
+  if (!Array.isArray(routes) || routes.length === 0) return null;
+  const matches = (route, file) => Array.isArray(route.paths) && underAny(file, route.paths);
+  const matched = routes.filter(route => files.some(file => matches(route, file)));
+  const uncovered = files.some(file => !isCosmeticFile(file) && !routes.some(route => matches(route, file)));
+  const commands = [
+    ...matched.map(route => route.setup),
+    ...matched.map(route => route.command),
+    ...(matched.length === 0 || uncovered ? [verify.test] : [])
+  ].filter(cmd => typeof cmd === 'string' && cmd.trim().length > 0);
+  return [...new Set(commands)];
+}
+
+/**
+ * Test files under a folder listed in `verify.no_tests_in` (route folders that are bundled into the app).
+ */
+export function testsInForbidden(files, verify) {
+  const folders = (verify?.no_tests_in ?? []).map(dir => (dir.endsWith('/') ? dir : `${dir}/`));
+  return folders.length === 0 ? [] : files.filter(file => isTestFile(file) && underAny(file, folders));
+}
+
+/**
+ * The command that runs just the given test files: the scoped command, the plain command with the files appended
+ * for a known runner, or the plain command unchanged when it cannot take file arguments.
+ */
+export function selfCheckCommand(files, verify, fallback) {
+  const list = files.join(' ');
+  if (verify?.test_scoped) return verify.test_scoped.split('{scope}').join(list);
+  const cmd = verify?.test || fallback;
+  if (/^(npm|pnpm|yarn|bun)\s+(run\s+)?test\b/.test(cmd)) return `${cmd} -- ${list}`;
+  if (/\b(vitest|jest|pytest|mocha|playwright|unittest)\b/.test(cmd)) return `${cmd} ${list}`;
+  return cmd;
 }
 
 /**
@@ -217,7 +283,7 @@ export async function main() {
   if (command === 'status') {
     const state = readSyncState(syncJson);
     const { files: modified, source } = resolveChangeSet(root);
-    const tier = detectExecutionTier(modified);
+    const tier = detectExecutionTier(modified, readRiskyPaths(resolve(root, 'project-blueprint.json')));
     console.log('\n=== Baton Sync Status ===');
     if (source === 'last-commit') console.log(CLEAN_TREE_NOTE);
     console.log(`Status:       ${state.status}`);
@@ -231,6 +297,7 @@ export async function main() {
     const delegations = state.delegations ?? [];
     const tokens = delegations.reduce((sum, d) => sum + (d.total_tokens || 0), 0);
     console.log(`Antigravity:  ${delegations.length} launches, ${tokens} tokens (last 20)`);
+    if ((state.tests_owed ?? []).length > 0) console.log(`Tests owed:   ${state.tests_owed.join(', ')}`);
     console.log('=========================\n');
     process.exit(0);
   }
@@ -279,13 +346,20 @@ export async function main() {
     if (!scopeOverride && process.env.npm_config_scope) {
       scopeOverride = process.env.npm_config_scope;
     }
+    if (tierOverride !== null && ![1, 2, 3].includes(tierOverride)) {
+      console.error('[Baton] --tier must be 1, 2 or 3');
+      process.exit(1);
+    }
+    const debug = args.includes('--debug') || process.env.BATON_DEBUG === '1';
 
     const { files: modified, source } = resolveChangeSet(root);
     if (source === 'last-commit') console.log(CLEAN_TREE_NOTE);
-    const tier = tierOverride || detectExecutionTier(modified);
+    const tier = tierOverride || detectExecutionTier(modified, readRiskyPaths(resolve(root, 'project-blueprint.json')));
     const { command: testCmd, isExpress } = resolveTestExecution(tier, scopeOverride, verifyConfig);
     const disabled = gatekeeperDisabled(args);
-    const verifiedCommand = isExpress ? 'express' : testCmd;
+    // An explicit --scope wins over routes; otherwise routes pick the commands for the changed files
+    const commands = isExpress ? [] : (scopeOverride ? null : planRoutes(modified, verifyConfig)) ?? [testCmd];
+    const verifiedCommand = isExpress ? 'express' : commands.join(' && ');
 
     // The commit hook repeats nothing: the same command already passed on the same content
     if (process.env.BATON_HOOK === '1' && state.status === 'verified' && state.verified) {
@@ -307,9 +381,30 @@ export async function main() {
       writeHandoff(syncPaths(root).md, { state, tier, files: modified, diagnosis });
     };
 
-    console.log(`\n[Baton] Verifying changes (Tier ${tier}${tierOverride ? ' - manual override' : ' - auto-detected'})...`);
+    console.log(`\n[Baton] Verifying changes (Tier ${tier}${tierOverride ? ' - set by --tier' : ' - auto-detected'})...`);
     state.gatekeeper = { result: 'not_needed', tests_written: [], out_of_scope: [] };
     state.e2e = 'not_run';
+
+    // Test files under a no-tests folder (an Expo Router routes dir, say) would be bundled into the app
+    const failForbidden = (paths) => {
+      settle('verification_failed');
+      console.error('\n[Baton] FAIL: test files under a folder that verify.no_tests_in marks as bundled into the app:');
+      for (const path of paths) console.error(`  ${path}`);
+      console.error('Move them beside that folder, in its parent. Nothing was moved.\n');
+      process.exit(1);
+    };
+    const forbiddenNow = testsInForbidden(modified, verifyConfig);
+    if (forbiddenNow.length > 0) failForbidden(forbiddenNow);
+
+    let commandStarted = Date.now();
+    const runCommand = (cmd) => {
+      commandStarted = Date.now();
+      try {
+        return { success: true, output: execSync(cmd, { cwd: root, encoding: 'utf-8', stdio: 'pipe' }) };
+      } catch (err) {
+        return { success: false, output: (err.stdout || '') + '\n' + (err.stderr || '') };
+      }
+    };
 
     if (isExpress) {
       console.log('[Baton] Tier 1 Express Lane: Cosmetic/asset changes detected. Full tests bypassed.');
@@ -321,9 +416,16 @@ export async function main() {
     }
 
     // An explicit --scope names the test that covers the change, so no tests are owed
-    if (shouldWriteTests({ tier, files: modified, disabled: disabled || Boolean(scopeOverride) })) {
+    const owesTests = shouldWriteTests({ tier, files: modified, disabled: disabled || Boolean(scopeOverride) });
+    if (owesTests && debug) {
+      const sources = modified.filter(isSourceFile);
+      state.tests_owed = [...new Set([...(state.tests_owed ?? []), ...sources])];
+      console.log(`[Baton] Debug mode: tests not written; owed for: ${sources.join(', ')}`);
+    } else if (owesTests) {
       console.log('[Baton] Source changed with no test changes: asking the Gatekeeper to write tests...');
-      const outcome = writeTests({ root, state, files: modified, saveState });
+      const owed = (state.tests_owed ?? []).filter(path => existsSync(resolve(root, path)));
+      const outcome = writeTests({ root, state, files: [...new Set([...modified, ...owed])], saveState });
+      if (outcome.testsWritten.length > 0) state.tests_owed = [];
       state.gatekeeper = { result: outcome.result, tests_written: outcome.testsWritten, out_of_scope: outcome.outOfScope };
       if (outcome.outOfScope.length > 0) {
         settle('gatekeeper_out_of_scope');
@@ -336,30 +438,48 @@ export async function main() {
         console.log(`[Baton] Gatekeeper skipped (${describeFailure(outcome.reason, outcome.detail)}): tests for this change are still owed.`);
       } else if (outcome.testsWritten.length > 0) {
         console.log(`[Baton] Gatekeeper wrote: ${outcome.testsWritten.join(', ')}`);
+        // Run only the new tests once; if they fail, the Gatekeeper gets one round to fix its own tests
+        const check = selfCheckCommand(outcome.testsWritten, verifyConfig, testCmd);
+        console.log(`[Baton] Checking the new tests: ${check}`);
+        const checked = runCommand(check);
+        if (!checked.success) {
+          console.log('[Baton] The new tests fail: asking the Gatekeeper to repair them (once)...');
+          const repair = repairTests({ root, state, tests: outcome.testsWritten, output: distillDiagnostics(checked.output), saveState });
+          state.gatekeeper.tests_written = [...new Set([...outcome.testsWritten, ...repair.testsWritten])];
+          state.gatekeeper.out_of_scope = repair.outOfScope;
+          state.gatekeeper.repaired = repair.result === 'ran';
+          if (repair.outOfScope.length > 0) {
+            settle('gatekeeper_out_of_scope');
+            console.error('\n[Baton] FAIL: The Gatekeeper changed files other than tests:');
+            for (const path of repair.outOfScope) console.error(`  ${path}`);
+            console.error('Nothing was reverted. Inspect these files before continuing.\n');
+            process.exit(1);
+          }
+          if (repair.result === 'skipped') console.log(`[Baton] Repair skipped (${describeFailure(repair.reason, repair.detail)}).`);
+          else if (repair.reply) console.log(`[Baton] Gatekeeper repair note:\n${repair.reply.split('\n').slice(0, 8).join('\n')}`);
+        }
+        const forbiddenWritten = testsInForbidden(state.gatekeeper.tests_written, verifyConfig);
+        if (forbiddenWritten.length > 0) failForbidden(forbiddenWritten);
       }
     }
 
-    const runCommand = (cmd) => {
-      commandStarted = Date.now();
-      try {
-        return { success: true, output: execSync(cmd, { cwd: root, encoding: 'utf-8', stdio: 'pipe' }) };
-      } catch (err) {
-        return { success: false, output: (err.stdout || '') + '\n' + (err.stderr || '') };
-      }
-    };
-
     let testSuccess = true;
     let testOutput = '';
-    let commandStarted = Date.now();
+    let failedCommand = null;
 
-    if (!isExpress) {
-      console.log(`[Baton] Executing test command: ${testCmd}`);
-      ({ success: testSuccess, output: testOutput } = runCommand(testCmd));
+    for (const cmd of commands) {
+      console.log(`[Baton] Executing test command: ${cmd}`);
+      ({ success: testSuccess, output: testOutput } = runCommand(cmd));
+      if (!testSuccess) {
+        failedCommand = cmd;
+        break;
+      }
     }
     if (testSuccess && wantE2e) {
       console.log(`[Baton] Executing e2e command: ${verifyConfig.e2e}`);
       ({ success: testSuccess, output: testOutput } = runCommand(verifyConfig.e2e));
       state.e2e = testSuccess ? 'passed' : 'failed';
+      if (!testSuccess) failedCommand = verifyConfig.e2e;
     }
 
     if (testSuccess) {
@@ -378,6 +498,7 @@ export async function main() {
       settle('verification_failed', diagnosis);
 
       console.error('\n[Baton] FAIL: Verification failed.');
+      if (failedCommand && (commands.length > 1 || wantE2e)) console.error(`Failed command: ${failedCommand}`);
       console.error(`Recorded Turn ${state.turn_count} / ${state.max_turns} in .agents/sync/handoff.json.`);
       if (diagnosis) {
         console.error('\n--- Gatekeeper Diagnosis ---');

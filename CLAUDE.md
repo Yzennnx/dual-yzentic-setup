@@ -23,6 +23,7 @@ You own application architecture, feature planning, and source code in `src/`.
    - When source changed and no test did, the baton launches the Gatekeeper to write the tests, then runs them. Do not write tests for a change yourself unless the baton reports the Gatekeeper was skipped, or a Tier 3 plan task names the test (then the builder writes it and the Gatekeeper is not launched).
    - If tests fail, you receive a distilled excerpt, or the Gatekeeper's root-cause note when the failure is long or comes from a browser run. Fix only the reported issue and re-run `npm run verify:agent`.
    - Keep `verify.test` fast. Browser and end-to-end suites belong in `verify.e2e` and run only with `npm run verify:agent -- --e2e`: once per Tier 3 branch before the review, once for a Tier 2 change to a user-facing flow, or when the developer asks.
+   - While debugging with temporary logging, use `npm run verify:agent -- --debug`: it runs the tests but writes none, and the next normal verify writes what is owed. `verify.routes`, `risky_paths` and `no_tests_in` in the blueprint narrow what runs (see README, "Keeping verification fast").
 3. **Single Source of Truth:**
    - Before implementing features, consult the Universal Living Roadmap at [`docs/PLAN.md`](docs/PLAN.md).
    - Log any new features or scope adjustments in `docs/PLAN.md`.

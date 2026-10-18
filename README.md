@@ -93,6 +93,37 @@ npm run verify:agent -- --no-gatekeeper
 
 After five failed runs in a row the baton locks until you run `npm run sync:reset`.
 
+### Keeping verification fast
+
+Every setting below is optional in `project-blueprint.json`; unset, the baton behaves as described above.
+
+- **`--tier N`** (1, 2 or 3) overrides detection and is printed as "set by --tier".
+- **`project.risky_paths`**: path prefixes of the risky surfaces. When set, all-cosmetic changes are Tier 1, a change under a risky prefix is Tier 3, and anything else is Tier 2 (no file-count rule).
+- **`--debug`** (or `BATON_DEBUG=1`): runs the tests but never launches the Gatekeeper, so temporary logging does not get tests. The source files are kept in the sync state as `tests_owed`, and the next normal `verify` that writes tests includes them, then clears the list.
+- **`project.verify.routes`**: run only the tests that fit the changed files. Each route has `paths` (prefixes), a `command`, and an optional `setup` that runs once first. The distinct setups and then commands of every matching route run in order; `verify.test` also runs when a changed non-cosmetic file matches no route, or when no route matches. A failure names the command that failed.
+- **`project.verify.no_tests_in`**: folders that must hold no tests (for example Expo Router's route folder, which is bundled into the app). The Gatekeeper is told not to write there, and `verify` fails if any changed or newly written test file is under one.
+- After the Gatekeeper writes tests, the baton runs just those files once; if they fail, the Gatekeeper gets one round to fix its own tests before the normal run.
+
+```json
+{
+  "project": {
+    "risky_paths": ["apps/api/", "packages/shared/src/domain/"],
+    "verify": {
+      "test": "npx vitest run",
+      "test_scoped": "npx vitest run {scope}",
+      "no_tests_in": ["apps/mobile/src/app"],
+      "routes": [
+        { "paths": ["apps/mobile/"], "command": "npx vitest run --project mobile" },
+        { "paths": ["apps/api/"], "setup": "docker compose up -d db", "command": "npx vitest run --project api" },
+        { "paths": ["scripts/", "tests/"], "command": "python tests/run_parallel.py" }
+      ]
+    }
+  }
+}
+```
+
+The last route is how this template runs its own Python tests.
+
 ---
 
 ## What Is Enforced

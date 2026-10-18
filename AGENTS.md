@@ -40,6 +40,7 @@ Size does not set the tier; the surface does. The tier the baton detects only ch
    - No logic change, mutation, or endpoint is complete until tests for it exist and pass.
    - **Authorship:** in Tier 3 the Builder writes the tests each plan task names, so the Gatekeeper is not launched. Otherwise the Gatekeeper writes them: `npm run verify:agent` launches it when source files changed and no test file did.
    - **Speed:** unit and component tests by default. An end-to-end test is written only for a user journey named in the spec, lives under `e2e/`, and runs only through `npm run verify:agent -- --e2e`.
+   - **Self-check:** after the Gatekeeper writes tests, the baton runs just those files once and gives the Gatekeeper one round to fix its own failing tests. `--debug` skips test writing and records `tests_owed`; the blueprint's optional `risky_paths`, `verify.routes` and `verify.no_tests_in` set the tier, the commands and the folders that hold no tests.
    - **Fallback:** when the baton reports the Gatekeeper was skipped (not installed, not logged in, out of quota, or disabled), or when a plan task names the test, the Builder writes the test first and watches it fail (`superpowers:test-driven-development`).
 4. **Gate 4: Systematic Root-Cause Debugging**
    - Never guess or blindly patch bugs. Investigate root causes with evidence before touching implementation (`superpowers:systematic-debugging`).

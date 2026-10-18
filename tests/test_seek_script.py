@@ -6,7 +6,10 @@ import sys
 
 # Add script directory to sys.path
 root_dir = Path(__file__).resolve().parent.parent
+# An archived skill (npm run skill:disable) moves to .agents/skills-archive and keeps working there.
 seek_script_dir = root_dir / ".agents" / "skills" / "skill-seeker" / "scripts"
+if not seek_script_dir.exists():
+    seek_script_dir = root_dir / ".agents" / "skills-archive" / "skill-seeker" / "scripts"
 if str(seek_script_dir) not in sys.path:
     sys.path.insert(0, str(seek_script_dir))
 

@@ -48,7 +48,9 @@ class TestDocsIntegrity(unittest.TestCase):
             for text, url in links:
                 if not url.startswith(("http://", "https://", "#", "mailto:")):
                     target = (f.parent / url.split("#")[0]).resolve()
-                    self.assertTrue(target.exists(), f"Broken relative link in {f.name}: {url}")
+                    # A link to an archived skill (npm run skill:disable) still resolves, in .agents/skills-archive.
+                    archived = Path(str(target).replace(f"{Path('.agents', 'skills')}", f"{Path('.agents', 'skills-archive')}", 1))
+                    self.assertTrue(target.exists() or archived.exists(), f"Broken relative link in {f.name}: {url}")
 
 if __name__ == "__main__":
     unittest.main()

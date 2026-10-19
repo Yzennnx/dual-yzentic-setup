@@ -48,5 +48,9 @@
       ],
       "rules_preset": "minimal"
     }
+  },
+  "workflow": {
+    "max_workers": 1,
+    "orca_repo_id": ""
   }
 }

@@ -145,6 +145,44 @@ class TestSessionContext(unittest.TestCase):
         self.assertNotIn("line 41\n", text + "\n")
         self.assertIn("truncated", text)
 
+    def test_no_orca_repo_id_means_no_ready_to_merge_list(self):
+        text = self.context(self.fixture(session="handoff", blueprint=json.dumps({"status": "initialized", "workflow": {"orca_repo_id": ""}})))
+        self.assertNotIn("Ready to merge:", text)
+
+
+class TestReadyToMerge(unittest.TestCase):
+    REPO = "repo-1"
+
+    def parse(self, stdout, repo_id=REPO):
+        code = f"import {{ parseReadyToMerge }} from './scripts/session-context.mjs'; console.log(JSON.stringify(parseReadyToMerge({json.dumps(stdout)}, {json.dumps(repo_id)})));"
+        res = subprocess.run(["node", "--input-type=module", "-e", code], cwd=REPO_ROOT, capture_output=True, text=True)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        return json.loads(res.stdout)
+
+    def card(self, **over):
+        return {"repoId": self.REPO, "workspaceStatus": "in-review", "branch": "refs/heads/ui/x", "head": "abcdef1234567", "comment": "ready to merge: abcdef1", **over}
+
+    def out(self, *cards):
+        return json.dumps({"ok": True, "result": {"worktrees": list(cards)}})
+
+    def test_lists_only_this_repos_in_review_cards(self):
+        lines = self.parse(self.out(
+            self.card(),
+            self.card(branch="refs/heads/other", workspaceStatus="in-progress"),
+            self.card(branch="refs/heads/foreign", repoId="someone-else"),
+        ))
+        self.assertEqual(lines, ["ui/x @ abcdef1: ready to merge: abcdef1"])
+
+    def test_nothing_without_in_review_cards_or_repo_id(self):
+        self.assertEqual(self.parse(self.out(self.card(workspaceStatus="completed"))), [])
+        self.assertEqual(self.parse(self.out()), [])
+        self.assertEqual(self.parse(self.out(self.card()), repo_id=""), [])
+
+    def test_nothing_when_the_cli_is_missing_or_orca_is_stopped(self):
+        self.assertEqual(self.parse(""), [])
+        self.assertEqual(self.parse("orca: command not found"), [])
+        self.assertEqual(self.parse(json.dumps({"ok": False, "error": {"code": "not_running"}})), [])
+
 
 class TestSettingsFile(unittest.TestCase):
     def commands(self, event, matcher=None):

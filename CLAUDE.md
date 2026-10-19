@@ -82,6 +82,37 @@ When a task turns out to touch a risky surface, stop, say so, and move up. Never
 
 ---
 
-## 4. Universal Repository Rules
+## 4. Worktrees
+
+Orchestrator: the session in the main checkout (on `main`). Worker: a Claude started by Orca in its own worktree, for one task.
+
+Setup: put the repo's Orca id in `workflow.orca_repo_id` (blueprint) and use it for `<orca-repo-id>` below. Until it is set, the session start shows no `Ready to merge:` list.
+
+### Orchestrator
+- Does its own tasks as above. Starts a worker only when all three hold, else the task waits:
+  1. The main session is waiting on something slow (a long build, a review, a hand test).
+  2. The next task touches different files: compare the files on its PLAN line with `git diff --name-only main...<open branch>` for each open worker.
+  3. Fewer than `workflow.max_workers` (blueprint) workers are open: `orca worktree list --json`, cards not `completed`.
+- At most one Tier 3 worker at a time, and none while the orchestrator is on a Tier 3 task.
+- Command, from the main checkout (then report `launch.outcome.handle` and the worktree path; do not wait):
+  ```text
+  orca worktree create --repo id:<orca-repo-id> --name <branch-name> --no-parent --base-branch main --agent claude --prompt "<brief>" --json
+  ```
+- Brief: the task's PLAN line, "you are a worker: follow CLAUDE.md section Worktrees", and the files the line names.
+- At session start, merge each `Ready to merge:` branch without asking: `git merge --ff-only <branch>` into local `main`, tick the task in `PLAN.md`, `orca worktree rm`. If `--ff-only` fails, tell the worker "rebase on main and verify again". Run no verify after a merge.
+- Only the orchestrator ticks `PLAN.md` boxes, writes `session.md` (include open workers), and pushes (only when asked). It does not approve worker designs, fix a worker's tests, review its code, or watch it.
+
+### Worker
+- If the worktree has no `node_modules`, run `npm install` first (the Orca setup hook cannot be set from the CLI yet).
+- Follow this file on your own branch, including builders, e2e and review for Tier 3; fix your own failures.
+- Before marking ready: `git rebase main`, then your final `npm run verify:agent` on top of the latest `main`.
+- Then set the Orca card to `in-review` with the comment "ready to merge: <last commit>" and stop.
+- Do not merge, do not edit `session.md`; in `PLAN.md` touch only your task line (notes, deviations), never the status box.
+- Every verify takes a machine-wide lock; a second one waits ("waiting for verify in ...").
+
+---
+
+
+## 5. Universal Repository Rules
 
 All universal tenets (zero secret exposure, link formatting, one task per session) are defined in [`AGENTS.md`](AGENTS.md).

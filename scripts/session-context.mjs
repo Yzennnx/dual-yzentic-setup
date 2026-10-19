@@ -9,6 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,6 +51,44 @@ function handoffBlock(root) {
   ].join('\n');
 }
 
+/**
+ * The Orca repo id from blueprint workflow.orca_repo_id, or '' when unset or unreadable.
+ */
+export function orcaRepoId(root) {
+  try {
+    return JSON.parse(readText(path.resolve(root, 'project-blueprint.json'))).workflow?.orca_repo_id ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * One line per in-review Orca worktree of this repo, from `orca worktree list --json` output.
+ * Empty for bad JSON, ok:false, no repo id, or no in-review cards.
+ */
+export function parseReadyToMerge(stdout, repoId) {
+  if (!repoId) return [];
+  try {
+    const parsed = JSON.parse(stdout);
+    if (parsed?.ok === false) return [];
+    return (parsed?.result?.worktrees ?? [])
+      .filter(wt => wt.repoId === repoId && wt.workspaceStatus === 'in-review')
+      .map(wt => `${String(wt.branch ?? '').replace(/^refs\/heads\//, '')} @ ${String(wt.head ?? '').slice(0, 7)}: ${wt.comment ?? ''}`);
+  } catch {
+    return [];
+  }
+}
+
+function readyToMergeBlock(root) {
+  const repoId = orcaRepoId(root);
+  if (!repoId) return [];
+  // A missing CLI, a stopped Orca or a timeout all leave the exit status non-zero or an error set
+  const run = spawnSync('orca', ['worktree', 'list', '--json'], { encoding: 'utf-8', timeout: 3000, shell: true });
+  if (run.error || run.status !== 0) return [];
+  const lines = parseReadyToMerge(run.stdout, repoId);
+  return lines.length > 0 ? ['', 'Ready to merge:', ...lines.map(line => `- ${line}`)] : [];
+}
+
 export function buildContext(root = REPO_ROOT) {
   return [
     'Project session context (injected by .claude/settings.json):',
@@ -63,7 +102,8 @@ export function buildContext(root = REPO_ROOT) {
       + 'Start from the handoff below and open only the files it lists.',
     '',
     '--- .agents/sync/session.md ---',
-    handoffBlock(root)
+    handoffBlock(root),
+    ...readyToMergeBlock(root)
   ].join('\n');
 }
 

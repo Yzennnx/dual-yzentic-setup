@@ -6,7 +6,8 @@
  * Provides 3 execution tiers (Express / Scoped / Full) and circuit breaker protection.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, openSync, writeSync, closeSync, unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
@@ -256,6 +257,81 @@ export function missingSpecs(root) {
   return [...new Set(missing)].filter(path => !existsSync(resolve(root, path)));
 }
 
+export const LOCK_PATH = resolve(tmpdir(), 'dual-yzentic-verify.lock');
+export const LOCK_MAX_AGE_MS = 20 * 60 * 1000;
+
+/**
+ * True when the process exists (signal 0 only probes; EPERM means it exists but is not ours).
+ */
+export function pidAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return err.code === 'EPERM';
+  }
+}
+
+/**
+ * The lock's contents, or null when it is missing or unreadable.
+ */
+export function readLock(lockPath = LOCK_PATH) {
+  try {
+    return JSON.parse(readFileSync(lockPath, 'utf-8'));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A lock is stale when its pid is gone or it is older than maxAgeMs.
+ */
+export function lockIsStale(lock, { maxAgeMs = LOCK_MAX_AGE_MS, now = Date.now(), isAlive = pidAlive } = {}) {
+  if (!lock || typeof lock.pid !== 'number') return true;
+  const started = Date.parse(lock.startedAt);
+  if (Number.isNaN(started) || now - started > maxAgeMs) return true;
+  return !isAlive(lock.pid);
+}
+
+/**
+ * Take the machine-wide verify lock, waiting while a live, recent one is held elsewhere.
+ * Returns a release function (idempotent). Created with 'wx' so two takers cannot both win.
+ */
+export async function acquireLock(worktree, { lockPath = LOCK_PATH, pollMs = 2000, sleep = ms => new Promise(r => setTimeout(r, ms)), log = console.log, ...staleOpts } = {}) {
+  let announced = false;
+  for (;;) {
+    try {
+      const fd = openSync(lockPath, 'wx');
+      writeSync(fd, JSON.stringify({ pid: process.pid, worktree, startedAt: new Date().toISOString() }));
+      closeSync(fd);
+      break;
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+    }
+    const held = readLock(lockPath);
+    if (lockIsStale(held, staleOpts)) {
+      try { unlinkSync(lockPath); } catch { /* someone else took it over */ }
+      continue;
+    }
+    if (!announced) {
+      log(`[Baton] waiting for verify in ${held.worktree}`);
+      announced = true;
+    }
+    await sleep(pollMs);
+  }
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    if (readLock(lockPath)?.pid === process.pid) {
+      try { unlinkSync(lockPath); } catch { /* already gone */ }
+    }
+  };
+  process.once('exit', release);
+  process.once('SIGINT', () => { release(); process.exit(130); });
+  return release;
+}
+
 const CLEAN_TREE_NOTE = '[Baton] Working tree clean: classifying the last commit.';
 
 /**
@@ -315,6 +391,9 @@ export async function main() {
       console.error('[Baton] No e2e command configured (project.verify.e2e).');
       process.exit(1);
     }
+
+    // One verify at a time on the machine; released on exit (every path below ends in process.exit)
+    await acquireLock(root);
 
     const state = readSyncState(syncJson);
 

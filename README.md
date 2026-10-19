@@ -124,6 +124,10 @@ Every setting below is optional in `project-blueprint.json`; unset, the baton be
 
 The last route is how this template runs its own Python tests.
 
+### Worktrees
+
+With Orca, the main session (the orchestrator) can hand a waiting task to a worker Claude in its own worktree while it waits on something slow. Set `workflow.orca_repo_id` and `workflow.max_workers` in the blueprint; CLAUDE.md section 4 has the rules. Workers mark their card `in-review`, and the next session start lists them under `Ready to merge:`. Every `verify:agent` takes a machine-wide lock, so two worktrees never run their suites at once.
+
 ---
 
 ## What Is Enforced

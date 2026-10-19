@@ -48,6 +48,7 @@ Size does not set the tier; the surface does. The tier the baton detects only ch
    - Never claim code works without running verification output (`superpowers:verification-before-completion`).
    - Run `npm run verify:agent`. It records the result in `.agents/sync/handoff.json` and `.agents/sync/handoff.md`.
    - Never run a full test suite directly. The baton runs it and distills the output.
+   - Worktrees: a worker's branch is reviewed in its own worktree (`npm run review` there). Only the orchestrator merges it into `main`.
 
 ---
 

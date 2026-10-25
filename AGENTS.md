@@ -26,7 +26,7 @@ Size does not set the tier; the surface does. The tier the baton detects only ch
 
 0. **Gate 0: Fresh Clone & Project Blueprint Intake**
    - At the start of a session, inspect [`project-blueprint.json`](project-blueprint.json).
-   - If `status === "uninitialized"`, DO NOT write project code yet. Ask the developer what they are building and their stack. When a project design spec exists in [`docs/specs/`](docs/specs/), use the [`tailor-setup`](.agents/skills/tailor-setup/SKILL.md) skill (`npm run tailor`); otherwise guide them to run `npm run init:project`.
+   - If `status === "uninitialized"`, DO NOT write project code yet. Start with the [`wayfinder`](.agents/skills/wayfinder/SKILL.md) skill (kickoff mode): it surfaces the open decisions and either hands off to brainstorming or charts a map. Once a project design spec exists in [`docs/specs/`](docs/specs/), use the [`tailor-setup`](.agents/skills/tailor-setup/SKILL.md) skill (`npm run tailor`). `npm run init:project` stays the shortcut when the developer already knows the stack and an archetype fits.
    - Work on this template itself (`scripts/`, `tests/`, `docs/`, `.agents/`, `.claude/`) is exempt.
 1. **Gate 1: Skills on Demand**
    - Consult [`docs/ai/agent-handbook.md`](docs/ai/agent-handbook.md) to pick the domain skill a task needs. Load a skill only when the task needs it.

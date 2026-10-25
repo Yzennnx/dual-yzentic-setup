@@ -51,7 +51,7 @@ Active milestone: **Workflow setup complete; waiting for a project to start**
 - [x] **Task 0.4: Token Budget Rules & Sonnet Builder Agent**
   - **Priority:** P0
   - **Status:** Done
-  - **Description:** Process sized by tier, plan tasks delegated to the `builder` agent on Sonnet, and one task per session with a handoff in `.agents/sync/session.md`. Rules: [`CLAUDE.md`](../CLAUDE.md) section 3.
+  - **Description:** Process sized by tier, plan tasks delegated to the `builder` agent on Sonnet, and sessions that chain up to 3 Tier 1/2 tasks in one area, with a handoff in `.agents/sync/session.md`. Rules: [`CLAUDE.md`](../CLAUDE.md) section 3.
 
 - [x] **Task 0.5: Workflow Remediation**
   - **Priority:** P0

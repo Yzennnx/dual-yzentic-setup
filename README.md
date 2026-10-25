@@ -64,7 +64,8 @@ e2e             npm run verify:agent -- --e2e        (Tier 3, once, before revie
 review          npm run review                       (Tier 3, once; then merge into local main)
 commit          the pre-commit hook blocks a failing commit; it skips the run
                 when the same content already passed
-hand off        Claude rewrites .agents/sync/session.md; you start a new session
+hand off        when the next task does not fit (Tier 3, new area, 3 tasks done,
+                or compacted), Claude rewrites .agents/sync/session.md; you start a new session
 ```
 
 ---
@@ -201,6 +202,6 @@ One review of a smaller branch ran for 590 seconds and returned nothing. `npm ru
 ## Saving Claude Tokens
 
 - Plan on the session model; let the Sonnet `builder` agent implement.
-- One task per session. The handoff file makes a fresh session cheap.
+- Chain up to 3 Tier 1/2 tasks in one area per session, with their designs approved together; Tier 3 gets its own session. The handoff file makes a fresh session cheap.
 - Use `/caveman` for terse replies and `/ponytail` for the smallest workable change.
 - Keep Tier 1 and Tier 2 work out of the spec-and-plan process.

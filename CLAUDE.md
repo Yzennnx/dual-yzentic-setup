@@ -56,7 +56,7 @@ Classify the task by the tiers in [`AGENTS.md`](AGENTS.md) before doing anything
 | Tier | Process | Do NOT |
 | :--- | :--- | :--- |
 | **Tier 1** | `fast-track` only: edit, glance at the diff, commit. | Load any other skill, write any document, or spawn any agent. |
-| **Tier 2** | Any change that touches no risky surface, of any size. A design in chat, as short as the change allows; wait for a yes; implement (or `builder` for many files); `npm run verify:agent`; e2e if a user-facing flow changed. | Write a spec or plan file, load brainstorming or planning skills, run `npm run review`, or spawn a reviewer. |
+| **Tier 2** | Any change that touches no risky surface, of any size. A design in chat, as short as the change allows; wait for a yes (when chaining tasks under 3.3, show the designs of the next 2 or 3 together for one yes); implement (or `builder` for many files); `npm run verify:agent`; e2e if a user-facing flow changed. | Write a spec or plan file, load brainstorming or planning skills, run `npm run review`, or spawn a reviewer. |
 | **Tier 3** | A change to a risky surface. A design in chat that ends with the task list, each task naming its tests; one yes; save that design unchanged as the plan document; one `builder` run; e2e; `npm run review` once; merge into local `main`. | Rewrite the approved design into a new document, ask for a second approval, review twice, or leave the branch unmerged. |
 
 Risky surfaces (AGENTS.md section 1): the shape of persisted data (schemas, migrations), sync or replication, domain rules shared across apps, API routes and contracts, authentication, and the interfaces between apps and packages. Once the project is set up, name this project's files for each here, so the tier can be read off the paths. Size does not set the tier; the surface does.
@@ -70,10 +70,15 @@ When a task turns out to touch a risky surface, stop, say so, and move up. Never
 - Read the builder's report, not its transcript. Act on its "Deviations" and "Open" lines.
 - Run builders one at a time. They share the working tree.
 
-### 3.3 One Task per Session
+### 3.3 Session Length
 - **At the start of a session,** a hook injects [`.agents/sync/session.md`](.agents/sync/session.md). Start from it and open only the files it lists. Do not re-explore what it already records.
-- **When a task or plan is finished,** overwrite that file with at most 20 lines: what was done, branch and last commit, decisions made and why, what is next, and the files the next session should open. Then tell the developer to start a new session for the next task.
-- Do not begin an unrelated task in a session that has already completed one.
+- **After each task,** add a one-line note to its `docs/PLAN.md` line (what landed, commit, what is left). That note is the record if the session ends early.
+- **Continue in the same session** with the next task only when all hold:
+  1. The next task is Tier 1 or Tier 2. A Tier 3 task always starts in a fresh session.
+  2. It works in the same app and area as the tasks already done (for example one app's UI, or the API); a new area means a new session.
+  3. The session has finished fewer than 3 tasks and has not been auto-compacted.
+- **When a check fails, or the developer ends the session,** overwrite `session.md` with at most 20 lines: what was done, branch and last commit, decisions made and why, what is next, what awaits a hand test, and the files the next session should open. Then tell the developer to start a new session.
+- The orchestrator may also start a worker (section 4) for a waiting task instead of doing it here.
 
 ### 3.4 Keep the Session Context Small
 - Reply briefly. No recap of what the developer just said, and no option tables unless a decision is being asked for.
@@ -115,4 +120,4 @@ Setup: put the repo's Orca id in `workflow.orca_repo_id` (blueprint) and use it 
 
 ## 5. Universal Repository Rules
 
-All universal tenets (zero secret exposure, link formatting, one task per session) are defined in [`AGENTS.md`](AGENTS.md).
+All universal tenets (zero secret exposure, link formatting, session length) are defined in [`AGENTS.md`](AGENTS.md).

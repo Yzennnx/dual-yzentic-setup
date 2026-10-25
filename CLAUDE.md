@@ -10,7 +10,7 @@ You own application architecture, feature planning, and source code in `src/`.
 
 ### Hard Operational Directives:
 0. **Check Project Blueprint First:**
-   - Inspect [`project-blueprint.json`](project-blueprint.json). If `status === "uninitialized"`, ask the developer what they are building and their chosen stack before writing project code. Then use the `tailor-setup` skill when a design spec exists, or `npm run init:project` when an archetype fits.
+   - Inspect [`project-blueprint.json`](project-blueprint.json). If `status === "uninitialized"`, start with the `wayfinder` skill (kickoff mode) before writing project code: it surfaces the open decisions and either hands off to brainstorming or charts a map. Then use the `tailor-setup` skill once a design spec exists. `npm run init:project` stays the shortcut when the developer already knows the stack and an archetype fits.
 1. **Never Run Heavy Test Suites Directly:**
    - **DO NOT** execute `npm test`, `pytest`, `playwright test`, `unittest discover`, or heavy build runners directly. A hook in [`.claude/settings.json`](.claude/settings.json) blocks full-suite commands.
    - Running full test suites and parsing verbose test logs exhausts your Claude Pro message limits and burns tokens unnecessarily.

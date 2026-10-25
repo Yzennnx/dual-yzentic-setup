@@ -24,7 +24,7 @@ Antigravity is launched with `agy --print`. It can read anything and edit test f
 
 ## Starting a Project
 
-**From a spec (recommended).** Brainstorm the project with Claude into a design spec in [`docs/specs/`](docs/specs/), then invoke the [`tailor-setup`](.agents/skills/tailor-setup/SKILL.md) skill. Claude writes a manifest into [`project-blueprint.json`](project-blueprint.json), shows you a dry run, and after your yes runs:
+**From a spec (recommended).** Start with the [`wayfinder`](.agents/skills/wayfinder/SKILL.md) skill: it lists the open decisions and either hands off to brainstorming or charts a map of decision tickets in `docs/wayfinder/` to resolve one per session. Either way you end with a design spec in [`docs/specs/`](docs/specs/); then invoke the [`tailor-setup`](.agents/skills/tailor-setup/SKILL.md) skill. Claude writes a manifest into [`project-blueprint.json`](project-blueprint.json), shows you a dry run, and after your yes runs:
 
 ```bash
 npm run tailor

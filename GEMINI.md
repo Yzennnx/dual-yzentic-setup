@@ -27,7 +27,7 @@ Most of your work arrives as one prompt from [`scripts/agy.mjs`](scripts/agy.mjs
 
 ### Hard Operational Directives:
 0. **Inspect Project Blueprint First:**
-   - Inspect [`project-blueprint.json`](project-blueprint.json). If `status === "uninitialized"`, prompt the developer to initialize project details before authoring tests.
+   - Inspect [`project-blueprint.json`](project-blueprint.json). If `status === "uninitialized"`, the project is at kickoff: the Builder starts with the `wayfinder` skill (kickoff mode); do not author tests until it is initialized.
 1. **Absorb All Verbose Logs:**
    - Execute unit tests, integration tests, and Playwright suites headlessly.
    - Absorb all raw terminal logs, stack traces, and browser DOM snapshots so Claude's context window remains clean.

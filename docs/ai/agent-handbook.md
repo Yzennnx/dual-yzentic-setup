@@ -9,7 +9,7 @@ This handbook serves as the operational onboarding manual and skills selection g
 Whenever starting a new session in this repository:
 
 0. **Start from the handoff:** Read [`.agents/sync/session.md`](../../.agents/sync/session.md). In Claude Code a hook injects it at session start. Open only the files it lists.
-1. **Inspect Project Blueprint:** Check [`project-blueprint.json`](../../project-blueprint.json). If `status === "uninitialized"`, ask the developer what they are building and their stack before editing project code.
+1. **Inspect Project Blueprint:** Check [`project-blueprint.json`](../../project-blueprint.json). If `status === "uninitialized"`, start with the [`wayfinder`](../../.agents/skills/wayfinder/SKILL.md) skill (kickoff mode) before editing project code. `npm run init:project` stays the shortcut when the developer already knows the stack and an archetype fits.
 2. **Inspect Sync Bus:** Run `npm run sync:status` for the baton state and the working-tree change set.
 3. **Check the Universal Living Roadmap:** Find the entry for the task at hand in [`docs/PLAN.md`](../PLAN.md).
 4. **Load on demand:** Open a skill in [`.agents/skills/`](../../.agents/skills/) or a rule file in [`docs/rules/`](../rules/README.md) only when the task needs it.
@@ -70,6 +70,7 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
 | **Award-winning UI polish & accessibility** | [`impeccable`](../../.agents/skills/impeccable/SKILL.md) | Precision commands: `/impeccable polish`, `bolder`, `quieter`, `audit` |
 | **System architecture & sequence diagrams** | [`archify`](../../.agents/skills/archify/SKILL.md) | Generates interactive architecture and sequence diagrams |
 | **Realistic mock & seed data for demos** | [`demo-seed-data`](../../.agents/skills/demo-seed-data/SKILL.md) | Populates dashboards with avatars, realistic names, dynamic metrics |
+| **Kickoff of an uninitialized project: surfacing and mapping open decisions** | [`wayfinder`](../../.agents/skills/wayfinder/SKILL.md) | Tags open decisions, then hands off to brainstorming or charts a ticket map in `docs/wayfinder/` |
 | **Tailoring the repo to a brainstormed spec at kickoff** | [`tailor-setup`](../../.agents/skills/tailor-setup/SKILL.md) | Derives skills, roadmap, rules, scaffold, and verify commands from the project spec |
 | **Micro-tasks, cosmetic CSS & quick fixes** | [`fast-track`](../../.agents/skills/fast-track/SKILL.md) | Express-lane protocol for token-efficient edits without test ceremony |
 | **Web application browser testing** | [`webapp-testing`](../../.agents/skills/webapp-testing/SKILL.md) | Headless Playwright automation and DOM verification |

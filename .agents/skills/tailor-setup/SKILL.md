@@ -16,7 +16,7 @@ version: 1.0.0
 
 ## 2. When NOT to Use
 
-- ❌ **No project spec yet.** Stop. Run `superpowers:brainstorming` to produce one first. Specs about this template itself (`*-setup-*`, `*-tailoring-*`, `skill-seeker-*`) are not project specs.
+- ❌ **No project spec yet.** Stop. Run `wayfinder` (kickoff mode) to produce one first; it hands off to `superpowers:brainstorming` or charts a decision map. Specs about this template itself (`*-setup-*`, `*-tailoring-*`, `skill-seeker-*`) are not project specs.
 - ❌ **Blueprint already `initialized`.** Stop and tell the developer. Re-tailoring overwrites `docs/PLAN.md`, including checked-off tasks. Only proceed with `--force` if the developer explicitly asks.
 - ❌ **Mid-project plan changes.** Edit `docs/PLAN.md` and toggle skills with `npm run skill:enable` / `npm run skill:disable` instead.
 

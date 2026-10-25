@@ -31,8 +31,8 @@ function blueprintLine(root) {
   try {
     const status = JSON.parse(raw).status;
     if (status === 'initialized') return 'Blueprint: initialized.';
-    return `Blueprint: ${status ?? 'unknown'}. Before writing project code, ask what the developer is building, `
-      + 'then use the tailor-setup skill (a spec exists) or `npm run init:project` (an archetype fits).';
+    return `Blueprint: ${status ?? 'unknown'}. Before writing project code, start with the wayfinder skill (kickoff mode), `
+      + 'then tailor-setup once a spec exists; `npm run init:project` is the shortcut when an archetype fits.';
   } catch {
     return 'Blueprint: project-blueprint.json is not valid JSON.';
   }

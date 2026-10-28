@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
-import { isCosmeticFile, isSourceFile, isTestFile, resolveChangeSet, fingerprintChanges } from './changes.mjs';
+import { isCosmeticFile, isSourceFile, isTestFile, resolveChangeSet, fingerprintChanges, getUncommittedFiles } from './changes.mjs';
 import { gatekeeperDisabled, shouldWriteTests, writeTests, repairTests, shouldDiagnose, diagnoseFailure, writeHandoff } from './gatekeeper.mjs';
 import { describeFailure } from './agy.mjs';
 import { checkAll as checkMockups } from './mockups-check.mjs';
@@ -148,14 +148,14 @@ export function detectExecutionTier(modifiedFiles = [], riskyPaths = null) {
 }
 
 /**
- * Read the project's verify commands from the blueprint.
- * Returns null until the project is initialized, or if the blueprint is missing or unreadable.
+ * Read the project's verify commands from the blueprint. Until the project is initialized, the template's own
+ * (`template_verify`, for work on the template itself; tailoring a project replaces it with `project.verify`).
+ * Returns null when neither is set, or if the blueprint is missing or unreadable.
  */
 export function readVerifyConfig(blueprintPath = BLUEPRINT_PATH) {
   try {
     const blueprint = JSON.parse(readFileSync(blueprintPath, 'utf-8'));
-    const verify = blueprint.project?.verify;
-    if (blueprint.status !== 'initialized') return null;
+    const verify = blueprint.status === 'initialized' ? blueprint.project?.verify : blueprint.template_verify;
     if (typeof verify?.test !== 'string' || verify.test.trim().length === 0) return null;
     return verify;
   } catch {
@@ -191,16 +191,17 @@ export function readRiskyPaths(blueprintPath = BLUEPRINT_PATH) {
  * commands of every route whose paths match a changed file. `verify.test` is added when no route matches, or when a
  * changed non-cosmetic file belongs to no route. Returns null when no routes are configured.
  */
-export function planRoutes(files, verify) {
+export function planRoutes(files, verify, { fast = false } = {}) {
   const routes = verify?.routes;
   if (!Array.isArray(routes) || routes.length === 0) return null;
   const matches = (route, file) => Array.isArray(route.paths) && underAny(file, route.paths);
   const matched = routes.filter(route => files.some(file => matches(route, file)));
   const uncovered = files.some(file => !isCosmeticFile(file) && !routes.some(route => matches(route, file)));
+  // A fast verify never falls back to the full command: the full run before merge covers what no route does
   const commands = [
     ...matched.map(route => route.setup),
     ...matched.map(route => route.command),
-    ...(matched.length === 0 || uncovered ? [verify.test] : [])
+    ...(!fast && (matched.length === 0 || uncovered) ? [verify.test] : [])
   ].filter(cmd => typeof cmd === 'string' && cmd.trim().length > 0);
   return [...new Set(commands)];
 }
@@ -224,6 +225,50 @@ export function selfCheckCommand(files, verify, fallback) {
   if (/^(npm|pnpm|yarn|bun)\s+(run\s+)?test\b/.test(cmd)) return `${cmd} -- ${list}`;
   if (/\b(vitest|jest|pytest|mocha|playwright|unittest)\b/.test(cmd)) return `${cmd} ${list}`;
   return cmd;
+}
+
+export const MAIN_BRANCHES = ['main', 'master'];
+const NOTES_REF = 'baton'; // a full verify is recorded as a git note on the commit it passed on, seen by every worktree
+
+function gitOut(root, args) {
+  return execSync(`git ${args}`, { cwd: root, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+}
+
+/**
+ * The checked-out branch, or null when HEAD is detached or root is not a git repo.
+ */
+export function currentBranch(root) {
+  try {
+    const name = gitOut(root, 'rev-parse --abbrev-ref HEAD');
+    return name === 'HEAD' ? null : name;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Note a passed full verify on HEAD, so `baton merge` can tell the branch tip was fully tested.
+ * Uncommitted changes are not in HEAD, so nothing is recorded then. Returns the line to print.
+ */
+export function recordFullVerify(root, command) {
+  if (getUncommittedFiles(root).length > 0) return '[Baton] Full verify not recorded: commit everything, then run it again.';
+  try {
+    gitOut(root, `notes --ref=${NOTES_REF} add -f -m ${JSON.stringify(`full verify passed: ${command}`)} HEAD`);
+    return `[Baton] Full verify recorded on ${gitOut(root, 'rev-parse --short HEAD')}.`;
+  } catch {
+    return '[Baton] Full verify not recorded: git notes failed.';
+  }
+}
+
+/**
+ * The full-verify note on a commit, or null when it has none.
+ */
+export function fullVerifyNote(root, rev) {
+  try {
+    return gitOut(root, `notes --ref=${NOTES_REF} show ${rev}`) || null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -395,6 +440,33 @@ export async function main() {
     process.exit(0);
   }
 
+  // Fast-forward a branch into the checked-out branch, only when a full verify passed on its tip
+  if (command === 'merge') {
+    const branch = args[1];
+    if (!branch) {
+      console.error('[Baton] Usage: npm run merge -- <branch>');
+      process.exit(1);
+    }
+    let tip;
+    try {
+      tip = gitOut(root, `rev-parse --verify ${branch}`);
+    } catch {
+      console.error(`[Baton] No branch ${branch}.`);
+      process.exit(1);
+    }
+    if (!fullVerifyNote(root, tip)) {
+      console.error(`[Baton] ${branch} has no full verify on its tip (${tip.slice(0, 7)}). In its checkout: npm run verify:agent -- --full`);
+      process.exit(1);
+    }
+    try {
+      execSync(`git merge --ff-only ${branch}`, { cwd: root, stdio: 'inherit' });
+    } catch {
+      console.error(`[Baton] ${branch} does not fast-forward: rebase it on the current branch and run the full verify again.`);
+      process.exit(1);
+    }
+    process.exit(0);
+  }
+
   if (command === 'reset') {
     writeSyncState(DEFAULT_STATE, syncJson);
     console.log('[Baton] State reset to idle.');
@@ -474,11 +546,16 @@ export async function main() {
     const rulesResult = checkRules(root);
     const rulesEarly = rulesResult.problems.filter(p => !rulesResult.ruleTestProblems.includes(p));
     if (rulesEarly.length > 0) failRules(rulesEarly);
-    const { command: testCmd, isExpress } = resolveTestExecution(tier, scopeOverride, verifyConfig);
+    // --full runs the whole suite whatever the tier; on a feature branch a plain verify is fast: only the routes the
+    // change touches. The full run happens once per branch, before merge (npm run merge checks for it)
+    const full = args.includes('--full') || process.env.npm_config_full === 'true';
+    const branch = currentBranch(root);
+    const fast = !full && !scopeOverride && branch !== null && !MAIN_BRANCHES.includes(branch);
+    const { command: testCmd, isExpress } = resolveTestExecution(full ? 3 : tier, full ? null : scopeOverride, verifyConfig);
     const disabled = gatekeeperDisabled(args);
     // An explicit --scope wins over routes; otherwise routes pick the commands for the changed files
-    const commands = isExpress ? [] : (scopeOverride ? null : planRoutes(modified, verifyConfig)) ?? [testCmd];
-    const verifiedCommand = isExpress ? 'express' : commands.join(' && ');
+    const commands = isExpress ? [] : full ? [testCmd] : (scopeOverride ? null : planRoutes(modified, verifyConfig, { fast })) ?? (fast ? [] : [testCmd]);
+    const verifiedCommand = isExpress ? 'express' : commands.join(' && ') || 'fast: no route';
 
     // The commit hook repeats nothing: the same command already passed on the same content
     if (process.env.BATON_HOOK === '1' && state.status === 'verified' && state.verified) {
@@ -596,6 +673,11 @@ export async function main() {
     let testOutput = '';
     let failedCommand = null;
 
+    if (fast) {
+      console.log(commands.length > 0
+        ? `[Baton] Fast verify on ${branch}: only the routes this change touches.`
+        : `[Baton] Fast verify on ${branch}: no route covers these files; the full run before merge tests them.`);
+    }
     for (const cmd of commands) {
       console.log(`[Baton] Executing test command: ${cmd}`);
       ({ success: testSuccess, output: testOutput } = runCommand(cmd));
@@ -614,6 +696,7 @@ export async function main() {
     if (testSuccess) {
       state.turn_count = 0; // reset turn count on success
       settle('verified');
+      if (full) console.log(recordFullVerify(root, verifiedCommand));
 
       console.log('\n[Baton] PASS: All tests passed! Verification completed.');
       console.log('Status set to "verified".\n');

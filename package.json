@@ -20,7 +20,8 @@
     "rules:check": "node scripts/rules-check.mjs",
     "rules:map": "node scripts/rules-map.mjs",
     "review": "node scripts/review.mjs",
-    "hook:install": "node scripts/install-hooks.mjs"
+    "hook:install": "node scripts/install-hooks.mjs",
+    "merge": "node scripts/baton.mjs merge"
   },
   "keywords": [
     "ai-agents",

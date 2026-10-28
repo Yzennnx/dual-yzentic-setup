@@ -90,6 +90,8 @@ Every setting below is optional in `project-blueprint.json`; unset, the baton be
 - **`project.verify.routes`**: run only the tests that fit the changed files. Each route has `paths` (prefixes), a `command`, and an optional `setup` that runs once first. The distinct setups and then commands of every matching route run in order; `verify.test` also runs when a changed non-cosmetic file matches no route, or when no route matches. A failure names the command that failed.
 - **`project.verify.no_tests_in`**: folders that must hold no tests (for example Expo Router's route folder, which is bundled into the app). The Gatekeeper is told not to write there, and `verify` fails if any changed or newly written test file is under one.
 - After the Gatekeeper writes tests, the baton runs just those files once; if they fail, the Gatekeeper gets one round to fix its own tests before the normal run.
+- **Fast on branches, full once.** On any branch but `main`/`master`, `verify` (and the commit hook) runs only the routes the change touches and never falls back to `verify.test`. `npm run verify:agent -- --full` runs `verify.test` whatever the tier and, on a clean tree, records a git note (`refs/notes/baton`) on HEAD. `npm run merge -- <branch>` fast-forwards only a branch whose tip carries that note.
+- **`template_verify`**: the template's own verify config (same shape as `project.verify`), used while the blueprint is uninitialized; a tailored project's `project.verify` takes over.
 
 ```json
 {

@@ -24,6 +24,7 @@ You own application architecture, feature planning, and source code in `src/`.
    - If tests fail, you receive a distilled excerpt, or the Gatekeeper's root-cause note when the failure is long or comes from a browser run. Fix only the reported issue and re-run `npm run verify:agent`.
    - Keep `verify.test` fast. Browser and end-to-end suites belong in `verify.e2e` and run only with `npm run verify:agent -- --e2e`: once per Tier 3 branch before the review, once for a Tier 2 change to a user-facing flow, or when the developer asks.
    - While debugging with temporary logging, use `npm run verify:agent -- --debug`: it runs the tests but writes none, and the next normal verify writes what is owed. `verify.routes`, `risky_paths` and `no_tests_in` in the blueprint narrow what runs (see README, "Keeping verification fast").
+   - **Fast per task, full once per branch.** On a branch other than `main`, `npm run verify:agent` and the commit hook run only the routes the change touches (no route: the checks only, no tests). After the branch's last commit, run `npm run verify:agent -- --full` once on the clean tip: it runs the whole suite and records a git note. Merge with `npm run merge -- <branch>`, which refuses a tip without that note. On `main`, verify behaves as before.
 3. **Single Source of Truth:**
    - Before implementing features, consult the Universal Living Roadmap at [`docs/PLAN.md`](docs/PLAN.md).
    - Log any new features or scope adjustments in `docs/PLAN.md`.
@@ -31,7 +32,7 @@ You own application architecture, feature planning, and source code in `src/`.
    - When a task does not name its files and the handoff, the plan, and a search or two do not find them, run `npm run scout -- "<task>"` and open only the files and ranges it lists. Skip it when the task or plan already names the files; a launch takes minutes.
 5. **Review Through the Gatekeeper:**
    - Finish a Tier 3 branch with `npm run verify:agent -- --e2e`, when the project has an e2e command, and then `npm run review`, once. Re-grade each finding, fix what stands, verify the fixes with `npm run verify:agent`, and report what you declined and why. Do not review again after the fixes. Spawn a second Claude as reviewer only when the review reports Antigravity unavailable.
-   - Then merge the branch into local `main`: the developer's standing approval, so each review covers one branch. Never push without asking.
+   - Then run `npm run verify:agent -- --full` and merge the branch into local `main` with `npm run merge -- <branch>`: the developer's standing approval, so each review covers one branch. Never push without asking.
    - Tier 2 work gets no review.
 
 ---
@@ -121,13 +122,13 @@ Setup: put the repo's Orca id in `workflow.orca_repo_id` (blueprint) and use it 
   orca worktree create --repo id:<orca-repo-id> --name <branch-name> --no-parent --base-branch main --agent claude --prompt "<brief>" --json
   ```
 - Brief: the task's PLAN line, "you are a worker: follow CLAUDE.md section Worktrees", and the files the line names.
-- At session start, merge each `Ready to merge:` branch without asking: `git merge --ff-only <branch>` into local `main`, tick the task in `PLAN.md`, `orca worktree rm`. If `--ff-only` fails, tell the worker "rebase on main and verify again". Run no verify after a merge.
+- At session start, merge each `Ready to merge:` branch without asking: `npm run merge -- <branch>` into local `main`, tick the task in `PLAN.md`, `orca worktree rm`. If it refuses, tell the worker "rebase on main, then npm run verify:agent -- --full". Run no verify after a merge.
 - Only the orchestrator ticks `PLAN.md` boxes, writes `session.md` (include open workers), and pushes (only when asked). It does not approve worker designs, fix a worker's tests, review its code, or watch it.
 
 ### Worker
 - If the worktree has no `node_modules`, run `npm install` first (the Orca setup hook cannot be set from the CLI yet).
 - Follow this file on your own branch, including builders, e2e and review for Tier 3; fix your own failures.
-- Before marking ready: `git rebase main`, then your final `npm run verify:agent` on top of the latest `main`.
+- Before marking ready: `git rebase main`, then your final `npm run verify:agent -- --full` on top of the latest `main`.
 - Then set the Orca card to `in-review` with the comment "ready to merge: <last commit>" and stop.
 - Do not merge, do not edit `session.md`; in `PLAN.md` touch only your task line (notes, deviations), never the status box.
 - Every verify takes a machine-wide lock; a second one waits ("waiting for verify in ...").

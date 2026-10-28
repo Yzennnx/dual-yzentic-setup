@@ -23,10 +23,16 @@ class TestRunParallel(unittest.TestCase):
             (tests_dir / name).write_text(body, encoding="utf-8")
         return tests_dir
 
-    def run_runner(self, tests_dir):
+    def run_runner(self, tests_dir, *patterns):
         # Run from an unrelated directory: the runner must not depend on the current directory.
-        return subprocess.run([sys.executable, str(RUNNER), str(tests_dir)], cwd=tests_dir.parent.parent,
+        return subprocess.run([sys.executable, str(RUNNER), str(tests_dir), *patterns], cwd=tests_dir.parent.parent,
                               capture_output=True, text=True)
+
+    def test_module_patterns_narrow_the_run(self):
+        tests_dir = self.make_tests_dir({"test_a1.py": PASSING, "test_a2.py": PASSING, "test_b.py": FAILING})
+        res = self.run_runner(tests_dir, "test_a*.py")
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.assertRegex(res.stdout.strip().splitlines()[-1], r"^Ran 2 test modules")
 
     def test_a_failing_module_fails_the_run_and_shows_only_its_own_output(self):
         res = self.run_runner(self.make_tests_dir({"test_good.py": PASSING, "test_bad.py": FAILING}))

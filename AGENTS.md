@@ -36,7 +36,7 @@ Size does not set the tier; the surface does. The tier the baton detects only ch
 2. **Gate 2: Design Before Code, Sized to the Tier**
    - **Tier 2:** state the design in chat, as short as the change allows, and wait for the developer's approval. Do not write a spec or plan file.
    - **Tier 3:** work out the design with the developer in chat, ending with the task list, each task naming the tests it adds. The developer's yes to that is the one approval. Then save the design as it was approved to [`docs/specs/`](docs/specs/), named `YYYY-MM-DD-<name>-plan.md` (design first, tasks after); do not rewrite it or ask again. Do not write a separate spec and plan. A project's kickoff spec, the one `tailor-setup` reads, is the exception: it is a `-design.md`.
-   - **Tier 3 finish:** run `npm run review` once. Re-grade each finding, fix what stands, and verify the fixes with `npm run verify:agent`; do not review again. Then merge the branch into local `main` (the developer's standing approval; never push without asking), so the next branch is reviewed on its own.
+   - **Tier 3 finish:** run `npm run review` once. Re-grade each finding, fix what stands, and verify the fixes with `npm run verify:agent`; do not review again. Then run `npm run verify:agent -- --full` once and merge the branch into local `main` with `npm run merge -- <branch>` (the developer's standing approval; never push without asking), so the next branch is reviewed on its own.
    - Log all planned work in [`docs/PLAN.md`](docs/PLAN.md).
 3. **Gate 3: Tests for Every Logic Change (Tier 2 & Tier 3)**
    - No logic change, mutation, or endpoint is complete until tests for it exist and pass.

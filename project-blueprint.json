@@ -26,5 +26,104 @@
     "orca_repo_id": "",
     "mode": "classic",
     "learning": true
+  },
+  "template_verify": {
+    "test": "python3 tests/run_parallel.py",
+    "routes": [
+      {
+        "paths": [
+          "scripts/mockups-check",
+          "scripts/rules-check",
+          "scripts/rules-map",
+          "scripts/agy-build",
+          "scripts/agy.test.mjs"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_node_scripts.py test_rules_skeleton.py"
+      },
+      {
+        "paths": [
+          "scripts/agy.mjs"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_agy_launcher.py test_scout.py test_node_scripts.py"
+      },
+      {
+        "paths": [
+          "scripts/baton",
+          "scripts/gatekeeper",
+          "scripts/changes",
+          "tests/stubs/",
+          "tests/repo_fixture",
+          "tests/test_gatekeeper",
+          "tests/test_baton"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_baton_*.py test_gatekeeper.py test_changes.py test_e2e_*.py test_sync_schema.py test_verify_lock.py test_hooks.py test_claude_hooks.py test_agy_launcher.py"
+      },
+      {
+        "paths": [
+          "scripts/tailor",
+          "scripts/roadmap"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_tailor_*.py test_roadmap.py test_plan_integrity.py test_e2e_project_blueprint.py"
+      },
+      {
+        "paths": [
+          "scripts/skills-manager",
+          ".agents/skills"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_skills_*.py"
+      },
+      {
+        "paths": [
+          "scripts/scout"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_scout.py"
+      },
+      {
+        "paths": [
+          "scripts/review"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_review.py"
+      },
+      {
+        "paths": [
+          "scripts/init-project"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_project_init.py"
+      },
+      {
+        "paths": [
+          "scripts/install-hooks",
+          "scripts/guard-commands",
+          "scripts/session-context",
+          ".claude/"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_hooks.py test_claude_hooks.py"
+      },
+      {
+        "paths": [
+          "CLAUDE.md",
+          "AGENTS.md",
+          "GEMINI.md",
+          ".cursorrules",
+          "README.md",
+          "docs/"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_docs_integrity.py test_root_rules.py test_plan_integrity.py test_rules_skeleton.py"
+      },
+      {
+        "paths": [
+          "project-blueprint.json",
+          "package.json"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_blueprint_schema.py test_baton_verify_config.py test_e2e_project_blueprint.py"
+      },
+      {
+        "paths": [
+          "tests/run_parallel",
+          "tests/test_run_parallel"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_run_parallel.py"
+      }
+    ]
   }
 }

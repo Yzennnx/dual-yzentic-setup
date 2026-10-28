@@ -26,7 +26,9 @@ def run_module(tests_dir, module):
 
 def main(argv):
     tests_dir = Path(argv[1] if len(argv) > 1 else Path(__file__).resolve().parent).resolve()
-    modules = sorted(tests_dir.glob("test_*.py"))
+    # Optional module patterns after the directory (test_tailor_*.py) narrow the run, for verify routes
+    patterns = argv[2:] or ["test_*.py"]
+    modules = sorted({m for pattern in patterns for m in tests_dir.glob(pattern)})
     if not modules:
         print(f"No test modules found in {tests_dir}", file=sys.stderr)
         return 1

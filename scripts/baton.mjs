@@ -393,8 +393,12 @@ export async function main() {
       process.exit(1);
     }
 
-    // One verify at a time on the machine; released on exit (every path below ends in process.exit)
-    await acquireLock(root);
+    // One verify at a time on the machine; released on exit (every path below ends in process.exit).
+    // A verify started under one that holds the lock (the test suite's fixture runs) skips it instead of waiting on its parent (not BATON_-prefixed: the test helpers strip those).
+    if (!process.env.VERIFY_LOCK_HELD) {
+      await acquireLock(root);
+      process.env.VERIFY_LOCK_HELD = '1';
+    }
 
     const state = readSyncState(syncJson);
 

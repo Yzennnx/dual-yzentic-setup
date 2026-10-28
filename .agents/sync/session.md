@@ -4,8 +4,8 @@
 - **How kickoff works now:**
   - The blueprint is uninitialized, so run wayfinder in kickoff mode. It does a breadth-first pass and tags each open decision as answerable now or fog (research, prototype, task, blocked-by).
   - Two or more fog items, or one that blocks other decisions, means it charts a map in `docs/wayfinder/` (`map.md` plus `tickets/NN-<slug>.md`). Otherwise it hands off to brainstorming, then a spec, then `tailor-setup`.
-  - One ticket per session. When the map is clear, the decisions collapse into `docs/specs/<date>-<project>-design.md`, the map is archived, and `tailor-setup` runs.
-  - `npm run init:project` is still the shortcut when the stack is known.
+  - One ticket per session. When the map is clear, the decisions collapse into `docs/rules/`, the map is archived, and `tailor-setup` runs.
+  - `npm run init:project` is retired: kickoff is wayfinder, then the design in `docs/rules/`, then `tailor-setup`.
 - **Decisions:**
   - Tracker is local markdown, not GitHub Issues.
   - The upstream "Notes may enable execution" override is removed: wayfinder never writes to `src/`.

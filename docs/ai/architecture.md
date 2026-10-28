@@ -41,7 +41,8 @@ Requirement / Idea
 - `.agents/skills/`: On-demand, self-contained procedural skills (`<skill>/SKILL.md`).
 - `.agents/skills/_staging/`: Isolated staging gate for unverified scrape artifacts.
 - `docs/ai/`: Agent operational guides, workflows, and architecture.
-- `docs/specs/`: Approved technical specs and feature design documents.
+- `docs/rules/`: The project's design: invariants, architecture and one doc per feature, each owning its code paths (`npm run rules:check`).
+- `docs/specs/`: Approved technical specs and plans.
 - `tests/`: Automated unit and integration test suites. Script tests run against temp fixture repos, never this one.
 - `scripts/`: The baton, the Antigravity launcher, and the scout, review, tailor, and init commands.
 - `.agents/sync/`: `session.md` (committed handoff) plus local, uncommitted baton and Gatekeeper state.

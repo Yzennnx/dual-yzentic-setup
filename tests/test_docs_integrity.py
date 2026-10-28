@@ -15,6 +15,14 @@ class TestDocsIntegrity(unittest.TestCase):
             content = doc_file.read_text(encoding="utf-8")
             self.assertGreater(len(content.strip()), 100, f"Doc {doc_name} must not be empty")
 
+    def test_rules_docs_exist_and_the_old_stack_files_are_gone(self):
+        rules = self.root / "docs" / "rules"
+        for name in ["README.md", "invariants.md", "architecture.md", "features/_example.md"]:
+            self.assertTrue((rules / name).exists(), f"docs/rules/{name} must exist")
+        for gone in ["frontend.md", "backend.md", "requirements.md"]:
+            self.assertFalse((rules / gone).exists(), f"docs/rules/{gone} was replaced by feature docs")
+        self.assertFalse((self.root / "blueprint" / "web-dev-rules").exists())
+
     def test_specs_directory_exists(self):
         specs_dir = self.root / "docs" / "specs"
         self.assertTrue(specs_dir.exists(), "docs/specs/ directory must exist")
@@ -37,6 +45,8 @@ class TestDocsIntegrity(unittest.TestCase):
             self.docs_ai / "workflows.md",
             self.docs_ai / "architecture.md",
             self.root / "docs" / "rules" / "README.md",
+            self.root / "docs" / "rules" / "invariants.md",
+            self.root / "docs" / "rules" / "architecture.md",
             self.root / "README.md",
             self.root / "docs" / "PLAN.md",
             self.root / ".agents" / "skills" / "tailor-setup" / "SKILL.md",

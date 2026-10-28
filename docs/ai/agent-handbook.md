@@ -9,10 +9,10 @@ This handbook serves as the operational onboarding manual and skills selection g
 Whenever starting a new session in this repository:
 
 0. **Start from the handoff:** Read [`.agents/sync/session.md`](../../.agents/sync/session.md). In Claude Code a hook injects it at session start. Open only the files it lists.
-1. **Inspect Project Blueprint:** Check [`project-blueprint.json`](../../project-blueprint.json). If `status === "uninitialized"`, start with the [`wayfinder`](../../.agents/skills/wayfinder/SKILL.md) skill (kickoff mode) before editing project code. `npm run init:project` stays the shortcut when the developer already knows the stack and an archetype fits.
+1. **Inspect Project Blueprint:** Check [`project-blueprint.json`](../../project-blueprint.json). If `status === "uninitialized"`, start with the [`wayfinder`](../../.agents/skills/wayfinder/SKILL.md) skill (kickoff mode) before editing project code. Brainstorming writes the design into [`docs/rules/`](../rules/README.md), then `tailor-setup` runs.
 2. **Inspect Sync Bus:** Run `npm run sync:status` for the baton state and the working-tree change set.
 3. **Check the Universal Living Roadmap:** Find the entry for the task at hand in [`docs/PLAN.md`](../PLAN.md).
-4. **Load on demand:** Open a skill in [`.agents/skills/`](../../.agents/skills/) or a rule file in [`docs/rules/`](../rules/README.md) only when the task needs it.
+4. **Load on demand:** Open a skill in [`.agents/skills/`](../../.agents/skills/) or a doc in [`docs/rules/`](../rules/README.md) (`invariants.md` plus the one feature doc the task's PLAN tag names) only when the task needs it.
 
 Do not survey the repository, recent history, or the skills catalogue up front. When a task does not say where its code lives and a quick search does not find it, `npm run scout -- "<task>"` returns the files that matter. Skip it when the task or plan names the files.
 
@@ -71,7 +71,7 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
 | **System architecture & sequence diagrams** | [`archify`](../../.agents/skills/archify/SKILL.md) | Generates interactive architecture and sequence diagrams |
 | **Realistic mock & seed data for demos** | [`demo-seed-data`](../../.agents/skills/demo-seed-data/SKILL.md) | Populates dashboards with avatars, realistic names, dynamic metrics |
 | **Kickoff of an uninitialized project: surfacing and mapping open decisions** | [`wayfinder`](../../.agents/skills/wayfinder/SKILL.md) | Tags open decisions, then hands off to brainstorming or charts a ticket map in `docs/wayfinder/` |
-| **Tailoring the repo to a brainstormed spec at kickoff** | [`tailor-setup`](../../.agents/skills/tailor-setup/SKILL.md) | Derives skills, roadmap, rules, scaffold, and verify commands from the project spec |
+| **Tailoring the repo to the design in docs/rules at kickoff** | [`tailor-setup`](../../.agents/skills/tailor-setup/SKILL.md) | Derives skills, roadmap, rules, scaffold, and verify commands from the project design in `docs/rules/` |
 | **Trying to break an area (QA attacks)** | [`qa-break`](../../.agents/skills/qa-break/SKILL.md) | Attack catalogue, findings in `docs/qa/`, `*.qa.e2e.ts` tests via `npm run e2e:qa` |
 | **Switching between classic and agy-build workflow** | [`workflow`](../../.agents/skills/workflow/SKILL.md) | `/workflow agy-build` or `/workflow classic`: sets `workflow.mode` in the blueprint |
 | **Micro-tasks, cosmetic CSS & quick fixes** | [`fast-track`](../../.agents/skills/fast-track/SKILL.md) | Express-lane protocol for token-efficient edits without test ceremony |
@@ -81,8 +81,8 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
 
 ---
 
-## 5. Web Development Domain Rules ([`docs/rules/`](../rules/README.md))
+## 5. Project Rules ([`docs/rules/`](../rules/README.md))
 
-| Task / Scope | Rule File | Focus & Standards |
+| Task / Scope | Doc | Focus |
 | :--- | :--- | :--- |
-| **Product rules, invariants and feature docs** | [`docs/rules/README.md`](../rules/README.md) | `invariants.md` plus the one feature doc your task names; `architecture.md` for stack and conventions |
+| **Product rules, invariants and feature docs** | [`docs/rules/README.md`](../rules/README.md) | `invariants.md` plus the one feature doc your task names; `architecture.md` for stack and conventions; `npm run rules:map -- <feature>` prints a feature's files, tasks and tests |

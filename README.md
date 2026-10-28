@@ -24,29 +24,15 @@ Antigravity is launched with `agy --print`. It can read anything and edit test f
 
 ## Starting a Project
 
-**From a spec (recommended).** Start with the [`wayfinder`](.agents/skills/wayfinder/SKILL.md) skill: it lists the open decisions and either hands off to brainstorming or charts a map of decision tickets in `docs/wayfinder/` to resolve one per session. Either way you end with a design spec in [`docs/specs/`](docs/specs/); then invoke the [`tailor-setup`](.agents/skills/tailor-setup/SKILL.md) skill. Claude writes a manifest into [`project-blueprint.json`](project-blueprint.json), shows you a dry run, and after your yes runs:
+**From the design in `docs/rules/`.** Start with the [`wayfinder`](.agents/skills/wayfinder/SKILL.md) skill: it lists the open decisions and either hands off to brainstorming or charts a map of decision tickets in `docs/wayfinder/` to resolve one per session. Either way the design is written straight into [`docs/rules/`](docs/rules/README.md): `invariants.md`, `architecture.md` and one doc per feature, which you review as the spec. Then invoke the [`tailor-setup`](.agents/skills/tailor-setup/SKILL.md) skill. Claude writes a manifest into [`project-blueprint.json`](project-blueprint.json), shows you a dry run, and after your yes runs:
 
 ```bash
 npm run tailor
 ```
 
-That archives the skills the project does not need, writes the real roadmap to [`docs/PLAN.md`](docs/PLAN.md), and points the baton at the project's own test commands. Claude then rewrites the stack rules in [`docs/rules/`](docs/rules/README.md) and scaffolds `src/` with the stack's own generator.
+That archives the skills the project does not need, writes the real roadmap to [`docs/PLAN.md`](docs/PLAN.md), and points the baton at the project's own test commands. Claude then scaffolds `src/` with the stack's own generator and records its files in `architecture.md`.
 
-**From an archetype.** When a preset fits, run the wizard:
-
-```bash
-npm run init:project
-```
-
-It asks for the project name, a one-line mission, an archetype (`fullstack-web`, `ai-agent-app`, `frontend-dashboard`, or `minimal`), and your name.
-
-Either way, skills that are not kept are moved to `.agents/skills-archive/`, not deleted:
-
-```bash
-npm run skill:list
-npm run skill:enable <skill-name>
-npm run skill:disable <skill-name>
-```
+Each feature doc names the code it owns (`owns:` in its front matter) and numbers its rules (`[feature#1]`). `npm run rules:check` runs in every verify: it fails when owned code changes without its doc, when a new source file has no owner, when an open PLAN task names no feature, and when a changed rule has no test citing its ID. `npm run rules:map` regenerates the feature map in [`docs/rules/README.md`](docs/rules/README.md).
 
 ---
 
@@ -159,9 +145,10 @@ The tier process and the builder hand-off are written rules in [`CLAUDE.md`](CLA
 
 ```bash
 # Start a project
-npm run tailor -- --dry-run      # preview spec-driven tailoring
+npm run tailor -- --dry-run      # preview tailoring from docs/rules
 npm run tailor                   # apply it
-npm run init:project             # archetype wizard
+npm run rules:check              # docs vs code: drift, orphans, rule tests
+npm run rules:map                # regenerate the feature map; -- <feature> prints one
 
 # Work
 npm run scout -- "<task>"        # Antigravity: which files matter

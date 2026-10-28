@@ -28,7 +28,7 @@ Size does not set the tier; the surface does. The tier the baton detects only ch
 
 0. **Gate 0: Fresh Clone & Project Blueprint Intake**
    - At the start of a session, inspect [`project-blueprint.json`](project-blueprint.json).
-   - If `status === "uninitialized"`, DO NOT write project code yet. Start with the [`wayfinder`](.agents/skills/wayfinder/SKILL.md) skill (kickoff mode): it surfaces the open decisions and either hands off to brainstorming or charts a map. Once a project design spec exists in [`docs/specs/`](docs/specs/), use the [`tailor-setup`](.agents/skills/tailor-setup/SKILL.md) skill (`npm run tailor`). `npm run init:project` stays the shortcut when the developer already knows the stack and an archetype fits.
+   - If `status === "uninitialized"`, DO NOT write project code yet. Start with the [`wayfinder`](.agents/skills/wayfinder/SKILL.md) skill (kickoff mode): it surfaces the open decisions and either hands off to brainstorming or charts a map. Brainstorming writes the project design straight into [`docs/rules/`](docs/rules/README.md); then use the [`tailor-setup`](.agents/skills/tailor-setup/SKILL.md) skill (`npm run tailor`).
    - Work on this template itself (`scripts/`, `tests/`, `docs/`, `.agents/`, `.claude/`) is exempt.
 1. **Gate 1: Skills on Demand**
    - Consult [`docs/ai/agent-handbook.md`](docs/ai/agent-handbook.md) to pick the domain skill a task needs. Load a skill only when the task needs it.
@@ -79,4 +79,4 @@ Size does not set the tier; the surface does. The tier the baton detects only ch
 - [`docs/ai/agent-handbook.md`](docs/ai/agent-handbook.md): Skills catalog and routing index.
 - [`docs/ai/workflows.md`](docs/ai/workflows.md): The scout, build, verify, and review flow.
 - [`.agents/skills/`](.agents/skills/): On-demand domain skills.
-- [`docs/rules/`](docs/rules/README.md): Modular full-stack web development standards.
+- [`docs/rules/`](docs/rules/README.md): The project's design, split by feature: `invariants.md`, `architecture.md`, and `features/<feature>.md` docs that own code paths. Read `invariants.md` plus the one feature doc your task names. `npm run rules:check` keeps docs and code in step.

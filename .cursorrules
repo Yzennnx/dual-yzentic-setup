@@ -1,3 +1,4 @@
 # Cursor AI Rules
 # Follow universal guidelines in AGENTS.md
 Always adhere to the behavioral rules, file hyperlink standards, and engineering workflows defined in AGENTS.md.
+The project's design lives in docs/rules/ (invariants.md, architecture.md, features/*.md); read invariants.md and the feature doc your task names.

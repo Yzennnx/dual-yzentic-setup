@@ -10,7 +10,7 @@ You own application architecture, feature planning, and source code in `src/`.
 
 ### Hard Operational Directives:
 0. **Check Project Blueprint First:**
-   - Inspect [`project-blueprint.json`](project-blueprint.json). If `status === "uninitialized"`, start with the `wayfinder` skill (kickoff mode) before writing project code: it surfaces the open decisions and either hands off to brainstorming or charts a map. Then use the `tailor-setup` skill once a design spec exists. `npm run init:project` stays the shortcut when the developer already knows the stack and an archetype fits.
+   - Inspect [`project-blueprint.json`](project-blueprint.json). If `status === "uninitialized"`, start with the `wayfinder` skill (kickoff mode) before writing project code: it surfaces the open decisions and either hands off to brainstorming or charts a map. Brainstorming writes the project design straight into [`docs/rules/`](docs/rules/README.md); then use the `tailor-setup` skill.
 1. **Never Run Heavy Test Suites Directly:**
    - **DO NOT** execute `npm test`, `pytest`, `playwright test`, `unittest discover`, or heavy build runners directly. A hook in [`.claude/settings.json`](.claude/settings.json) blocks full-suite commands.
    - Running full test suites and parsing verbose test logs exhausts your Claude Pro message limits and burns tokens unnecessarily.
@@ -62,6 +62,12 @@ Classify the task by the tiers in [`AGENTS.md`](AGENTS.md) before doing anything
 Risky surfaces (AGENTS.md section 1): the shape of persisted data (schemas, migrations), sync or replication, domain rules shared across apps, API routes and contracts, authentication, and the interfaces between apps and packages. Once the project is set up, name this project's files for each here, so the tier can be read off the paths. Size does not set the tier; the surface does.
 
 When a task turns out to touch a risky surface, stop, say so, and move up. Never move down mid-task.
+
+### 3.1b Rules
+The design lives in [`docs/rules/`](docs/rules/README.md): `invariants.md`, `architecture.md` and one `features/<feature>.md` per feature, each owning its code paths. Before a task, read `invariants.md` and the feature doc(s) the task's PLAN tag names (`[feature]`), not the whole folder.
+- **Fix A:** a design that changes behaviour shows the exact new or changed rule text with its ID (`[feature#3] ...`), and the developer's yes covers that text. Edit the doc first, then write code to it.
+- **Fix B:** rule tests are written from the doc by an agent that has not written the code (the Gatekeeper in classic mode, the `rule-tests` job in agy-build mode) and cite the rule ID.
+- **Checks:** `npm run rules:check` runs in every verify. It fails when owned code changes without its doc (or a commit trailer `Docs: no behaviour change (<feature>)`), when a new source file has no owner, and when a changed rule has no test. A feature's first task adds its new files to that feature's `owns`.
 
 ### 3.2 Plan on the Session Model, Build on Sonnet
 - Two modes, set by `workflow.mode` in the blueprint and switched with `/workflow` ([skill](.agents/skills/workflow/SKILL.md)). **classic**: the rules below. **agy-build**: Claude designs and plans only, each task naming files, tests and mockups; each task is dispatched to the Antigravity `build` job (`npm run agy:build`), which writes code and tests and commits once per task; Claude reads the diff against the design and runs `npm run verify:agent`. The `builder` agent is not used in agy-build.

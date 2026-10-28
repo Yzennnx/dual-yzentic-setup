@@ -20,6 +20,7 @@ Most of your work arrives as one prompt from [`scripts/agy.mjs`](scripts/agy.mjs
 4. **Stay within the line limit the prompt gives.** The Builder reads only your reply.
 5. **Where code contradicts the spec, test to the spec** and say so in one line.
 6. **Prefer fast tests.** Write unit or component tests unless the prompt asks for an end-to-end test.
+7. **Tests from rules.** When the prompt lists rules (ID and text) from `docs/rules/`, write one test per rule from the rule text alone and cite the ID in the test name or a `covers <id>` comment. Where the code disagrees, leave the test failing and say so in one line; never bend a test to fit the code.
 
 ---
 

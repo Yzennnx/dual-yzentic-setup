@@ -90,9 +90,9 @@ Any design that references mockups ends its task list with a table: mockup file,
 - The developer can see what is loaded with `/context`. Skills and connectors synced from claude.ai load into every session and are switched off in claude.ai settings, not in this repository.
 
 ### 3.5 Learning Mode
-The developer is new to Electron, Expo/React Native and TypeScript and wants to understand what gets built. On while `workflow.learning` in the blueprint is `true` (default). Tier 1 skips it.
-- **Before the yes:** every Tier 2 and Tier 3 design ends with "Before you say yes", 3 lines at most: the part of the app it touches (renderer, preload/bridge, main, db, shared, sync server, mobile), how data flows through it, and one question the developer should be able to answer.
-- **After the build** (the builder's report in classic, Claude's diff read in agy-build): end with "What you should understand", 5 lines at most: files changed, one line each; the data flow (`tap → ListsView → bridge → db`); one new concept or piece of syntax in plain words, at `file:line`; one line the developer should read in the diff.
+For a developer learning the project's stack and wanting to understand what gets built. On while `workflow.learning` in the blueprint is `true` (default). Tier 1 skips it.
+- **Before the yes:** every Tier 2 and Tier 3 design ends with "Before you say yes", 3 lines at most: the part of the app it touches (UI, bridge or API layer, domain logic, storage, sync), how data flows through it, and one question the developer should be able to answer.
+- **After the build** (the builder's report in classic, Claude's diff read in agy-build): end with "What you should understand", 5 lines at most: files changed, one line each; the data flow (`click → component → API or bridge → storage`); one new concept or piece of syntax in plain words, at `file:line`; one line the developer should read in the diff.
 - **"Why" or "explain":** plain language and a tiny example, not pasted code.
 - **Hand-written task:** once a week, or when asked, suggest one small Tier 1 or Tier 2 task for the developer to write; Claude reviews it instead of writing it.
 

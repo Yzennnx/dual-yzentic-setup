@@ -134,6 +134,7 @@ With Orca, the main session (the orchestrator) can hand a waiting task to a work
 ## What Is Enforced
 
 - **Failing commits are blocked** by the pre-commit hook (`npm run hook:install`). It never runs the end-to-end suite.
+- **QA attack tests** (`*.qa.e2e.ts`, `npm run e2e:qa`) need a `qa` Playwright project that matches only those files, and an `e2e` project that excludes them; the template ships no `playwright.config.ts`, so the [`qa-break`](.agents/skills/qa-break/SKILL.md) skill shows the snippet.
 - **The test command stays fast.** Browser suites live in `verify.e2e` and run only on request.
 - **Full test suites cannot be run directly by Claude.** A hook in [`.claude/settings.json`](.claude/settings.json) blocks them and points at the baton.
 - **Every session starts from the handoff.** The same file injects [`.agents/sync/session.md`](.agents/sync/session.md) at session start.

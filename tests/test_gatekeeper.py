@@ -237,6 +237,27 @@ class TestGatekeeper(unittest.TestCase):
         self.assertTrue(prompt.endswith(PLAIN_PATHS_RULE), prompt)
         self.assertEqual(self.state(root)["gatekeeper"], {"result": "ran", "tests_written": [], "out_of_scope": []})
 
+    RULE_DOC = (
+        "---\nowns: []\n---\n# Demo\n\n## What the user sees\nx\n\n## Rules\n"
+        "- [demo#1] The demo opens in under a second.\n- [demo#2] (manual) The demo looks calm.\n\n"
+        "## How it works\nx\n\n## Limits and out of scope\nx\n"
+    )
+
+    def test_the_write_prompt_carries_the_changed_rules_and_a_rule_without_a_test_then_fails(self):
+        root = self.make_fixture(changes={"src/app.js": "module.exports = 1;\n", "docs/rules/features/demo.md": self.RULE_DOC})
+        res = self.baton(root)
+        prompt = self.prompt()
+        self.assertIn("- demo#1: The demo opens in under a second.", prompt)
+        self.assertIn("never bend a test to fit the code", prompt.lower())
+        self.assertNotIn("demo#2", prompt, "manual rules are not handed to the test writer")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("rule demo#1 was added or reworded but no test cites it", res.stderr)
+
+    def test_a_prompt_without_changed_rules_has_no_rule_section(self):
+        root = self.make_fixture()
+        self.baton(root)
+        self.assertNotIn("Rules added or reworded", self.prompt())
+
     def test_tier_3_launches_too(self):
         root = self.make_fixture(changes={f"src/{name}.js": "module.exports = 1;\n" for name in "abcd"})
         res = self.baton(root)

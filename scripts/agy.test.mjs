@@ -1,7 +1,7 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { modelsForJob, modelForJob, shouldTryNextModel } from './agy.mjs';
-import { parseArgs, buildPrompt } from './agy-build.mjs';
+import { parseArgs, buildPrompt, ruleTestsPrompt, jobsFor } from './agy-build.mjs';
 
 const KEYS = ['BATON_AGY_MODEL', 'BATON_AGY_MODEL_DEEP', 'BATON_AGY_MODEL_FAST'];
 afterEach(() => { for (const k of KEYS) delete process.env[k]; });
@@ -55,5 +55,31 @@ describe('agy-build parseArgs', () => {
     assert.ok((prompt).includes('3,4'));
     assert.ok((prompt).includes('docs/specs/x.md'));
     assert.ok((prompt).includes('one commit per task'));
+  });
+});
+
+describe('rule-tests job', () => {
+  const rules = [
+    { id: 'sessions#1', manual: false, text: 'A session lasts 10 to 240 minutes.' },
+    { id: 'sessions#2', manual: true, text: 'The dialer looks calm.' }
+  ];
+  it('runs before build when testable rules changed, and not otherwise', () => {
+    assert.deepEqual(jobsFor({ rules }), ['rule-tests', 'build']);
+    assert.deepEqual(jobsFor({ rules: [rules[1]] }), ['build']);
+    assert.deepEqual(jobsFor({}), ['build']);
+    assert.deepEqual(jobsFor({ qa: true, rules }), ['qa']);
+  });
+  it('hands the rule id and text to the test writer, not the manual rule', () => {
+    const prompt = ruleTestsPrompt(rules);
+    assert.ok(prompt.includes('sessions#1: A session lasts 10 to 240 minutes.'));
+    assert.ok(!prompt.includes('sessions#2'));
+    assert.ok(prompt.includes('must not read it'));
+  });
+  it('tells the build job that the rule tests already exist', () => {
+    assert.ok(buildPrompt({ plan: 'p.md', tasks: '1', ruleTests: true }).includes('already exist'));
+    assert.ok(!buildPrompt({ plan: 'p.md', tasks: '1' }).includes('already exist'));
+  });
+  it('uses the deep chain', () => {
+    assert.equal(modelsForJob('rule-tests')[0], 'gemini-4-argon-medium');
   });
 });

@@ -16,7 +16,7 @@ const CHAIN_FAST = ['gemini-4-argon-low', 'claude-sonnet-5-5-low', 'gpt-oss-120b
 const FAST_JOBS = ['scout'];
 const MODEL_ERROR = /quota|rate.?limit|exhaust|unavailable|overloaded|capacity|not found|unknown model|unsupported model|invalid model|no access|(429|503)/i;
 const DEFAULT_TIMEOUT_SECONDS = 600;
-const JOB_TIMEOUT_SECONDS = { review: 1200, build: 1800, qa: 1800 }; // a review reads the whole branch and outlasts the other jobs
+const JOB_TIMEOUT_SECONDS = { review: 1200, build: 1800, qa: 1800, 'rule-tests': 900 }; // a review reads the whole branch and outlasts the other jobs
 const DEFAULT_KILL_GRACE_SECONDS = 15; // agy gets this long past its own --print-timeout before we kill it
 const DELEGATION_LIMIT = 20;
 

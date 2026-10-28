@@ -147,6 +147,20 @@ export function changedRules(diffText) {
   return out;
 }
 
+/**
+ * Prompt lines that hand changed rules to a test writer that has not written the code (empty without rules).
+ * Manual rules are left out: only a hand test can prove them.
+ */
+export function ruleTestLines(rules) {
+  const testable = (rules ?? []).filter(r => !r.manual);
+  if (testable.length === 0) return [];
+  return [
+    'Rules added or reworded on this branch (docs/rules). Write one test per rule from the rule text alone, and cite the rule ID in the test name or a "covers <id>" comment:',
+    ...testable.map(r => `- ${r.id}: ${r.text}`),
+    'Where the code disagrees with a rule, leave that test failing and report the mismatch in one line. Never bend a test to fit the code.'
+  ];
+}
+
 const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
 
 /**
@@ -184,7 +198,7 @@ export function gitChange(root) {
  */
 export function checkRules(root = REPO_ROOT, { change = gitChange(root), files = listFiles(root) } = {}) {
   const { docs, features, invariants } = loadDocs(root);
-  if (features.length === 0) return { skipped: true, problems: [], warnings: [], summary: null };
+  if (features.length === 0) return { skipped: true, problems: [], ruleTestProblems: [], warnings: [], summary: null };
   const cfg = readRules(root);
   const problems = [];
   const names = features.map(f => f.name);
@@ -245,17 +259,19 @@ export function checkRules(root = REPO_ROOT, { change = gitChange(root), files =
   for (const f of orphans.filter(f => change.added.includes(f))) problems.push(`${f} is a new source file no doc owns (add it to a feature's "owns" in docs/rules/features/)`);
   const oldOrphans = orphans.filter(f => !change.added.includes(f));
 
-  // 8. Rule tests
+  // 8. Rule tests (kept apart: the baton checks them again after the Gatekeeper has written tests)
+  const ruleTestProblems = [];
   const mine = new Map(docs.flatMap(d => d.rules).concat(invariants).map(r => [r.id, r]));
   for (const r of changedRules(change.diff)) {
     if (r.manual || !mine.has(r.id) || cited.has(r.id)) continue;
-    problems.push(`rule ${r.id} was added or reworded but no test cites it (name the test "${r.id} ..." or add "// covers ${r.id}")`);
+    ruleTestProblems.push(`rule ${r.id} was added or reworded but no test cites it (name the test "${r.id} ..." or add "// covers ${r.id}")`);
   }
 
+  problems.push(...ruleTestProblems);
   const untested = [...mine.values()].filter(r => !r.manual && !cited.has(r.id)).length;
   const warnings = [`${oldOrphans.length} orphan files`, `${untested} rules without a test`];
   const summary = `rules: ${problems.length === 0 ? 'ok' : `${problems.length} problems`} · ${warnings.join(' · ')}`;
-  return { skipped: false, problems, warnings, summary, docs, features, tasks, owners, cited, files };
+  return { skipped: false, problems, ruleTestProblems, warnings, summary, docs, features, tasks, owners, cited, files };
 }
 
 export function main(root = REPO_ROOT) {

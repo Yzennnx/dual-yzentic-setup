@@ -464,12 +464,15 @@ export async function main() {
       }
     }
     // Feature docs must match the code: drift, orphans, dead links, untested rules (skipped until a feature doc exists)
-    const rulesResult = checkRules(root);
-    if (rulesResult.problems.length > 0) {
+    // Rules without a citing test wait until the Gatekeeper has had its turn to write them
+    const failRules = (problems) => {
       console.error('\n[Baton] FAIL: docs/rules out of date (npm run rules:check):');
-      for (const problem of rulesResult.problems) console.error(`  ${problem}`);
+      for (const problem of problems) console.error(`  ${problem}`);
       process.exit(1);
-    }
+    };
+    const rulesResult = checkRules(root);
+    const rulesEarly = rulesResult.problems.filter(p => !rulesResult.ruleTestProblems.includes(p));
+    if (rulesEarly.length > 0) failRules(rulesEarly);
     const { command: testCmd, isExpress } = resolveTestExecution(tier, scopeOverride, verifyConfig);
     const disabled = gatekeeperDisabled(args);
     // An explicit --scope wins over routes; otherwise routes pick the commands for the changed files
@@ -577,6 +580,14 @@ export async function main() {
         }
         const forbiddenWritten = testsInForbidden(state.gatekeeper.tests_written, verifyConfig);
         if (forbiddenWritten.length > 0) failForbidden(forbiddenWritten);
+      }
+    }
+
+    if (!debug) {
+      const rulesLate = checkRules(root).ruleTestProblems;
+      if (rulesLate.length > 0) {
+        settle('verification_failed');
+        failRules(rulesLate);
       }
     }
 

@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSy
 import { resolve, dirname } from 'node:path';
 import { launchAgy, appendDelegation, describeFailure, PLAIN_PATHS_RULE } from './agy.mjs';
 import { isSourceFile, isTestFile, snapshotChanges, checkScope } from './changes.mjs';
+import { gitChange, changedRules, ruleTestLines } from './rules-check.mjs';
 
 const ARTIFACT_SLACK_MS = 2000; // coarse filesystem timestamps
 const FAILURE_LOG = '.agents/sync/last-failure.log';
@@ -55,7 +56,7 @@ function noTestsLine(noTestsIn) {
     : [];
 }
 
-function buildWritePrompt(sources, { spec, testCommand, e2eCommand, noTestsIn }) {
+function buildWritePrompt(sources, { spec, testCommand, e2eCommand, noTestsIn }, rules = []) {
   return [
     'You are the Gatekeeper of this repository (your role is defined in GEMINI.md).',
     'The Builder changed these source files and changed no tests:',
@@ -69,6 +70,7 @@ function buildWritePrompt(sources, { spec, testCommand, e2eCommand, noTestsIn })
     '- Run nothing.',
     ...noTestsLine(noTestsIn),
     '- Where the code contradicts the spec, test to the spec and say so in one line.',
+    ...ruleTestLines(rules),
     e2eCommand
       ? 'Write unit or component tests. Write an end-to-end test only when the change adds or alters a user journey named in the spec, and put it under e2e/.'
       : 'Write unit or component tests only. Do not write end-to-end or browser tests.',
@@ -128,11 +130,11 @@ function launchAsAntigravity(state, saveState, options) {
  * Ask Antigravity to write tests for the changed source files. The result is 'ran' when the launch was ok, else 'skipped'.
  * The scope guard runs whatever the launch result, since a killed run may have written files.
  */
-export function writeTests({ root, state, files, saveState = () => {} }) {
+export function writeTests({ root, state, files, saveState = () => {}, rules = changedRules(gitChange(root).diff) }) {
   const before = snapshotChanges(root);
   const launch = launchAsAntigravity(state, saveState, {
     job: 'write_tests',
-    prompt: buildWritePrompt(files.filter(isSourceFile), readProject(root)),
+    prompt: buildWritePrompt(files.filter(isSourceFile), readProject(root), rules),
     allowEdits: true,
     root
   });

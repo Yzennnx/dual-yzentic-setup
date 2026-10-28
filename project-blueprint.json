@@ -51,6 +51,7 @@
   },
   "workflow": {
     "max_workers": 1,
-    "orca_repo_id": ""
+    "orca_repo_id": "",
+    "mode": "classic"
   }
 }

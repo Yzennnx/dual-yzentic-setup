@@ -14,6 +14,7 @@
     "init:project": "node scripts/init-project.mjs",
     "tailor": "node scripts/tailor.mjs",
     "scout": "node scripts/scout.mjs",
+    "mockups:check": "node scripts/mockups-check.mjs",
     "review": "node scripts/review.mjs",
     "hook:install": "node scripts/install-hooks.mjs"
   },

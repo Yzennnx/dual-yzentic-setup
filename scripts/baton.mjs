@@ -14,6 +14,7 @@ import { execSync } from 'node:child_process';
 import { isCosmeticFile, isSourceFile, isTestFile, resolveChangeSet, fingerprintChanges } from './changes.mjs';
 import { gatekeeperDisabled, shouldWriteTests, writeTests, repairTests, shouldDiagnose, diagnoseFailure, writeHandoff } from './gatekeeper.mjs';
 import { describeFailure } from './agy.mjs';
+import { checkAll as checkMockups } from './mockups-check.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -434,6 +435,15 @@ export async function main() {
     const { files: modified, source } = resolveChangeSet(root);
     if (source === 'last-commit') console.log(CLEAN_TREE_NOTE);
     const tier = tierOverride || detectExecutionTier(modified, readRiskyPaths(resolve(root, 'project-blueprint.json')));
+    // A changed mockup must leave its design's map complete and current
+    if (modified.some(f => f.replaceAll('\\', '/').startsWith('docs/design/mockups/'))) {
+      const { problems } = checkMockups(root, modified);
+      if (problems.length > 0) {
+        console.error('\n[Baton] FAIL: mockup map out of date (npm run mockups:check -- <design.md>):');
+        for (const problem of problems) console.error(`  ${problem}`);
+        process.exit(1);
+      }
+    }
     const { command: testCmd, isExpress } = resolveTestExecution(tier, scopeOverride, verifyConfig);
     const disabled = gatekeeperDisabled(args);
     // An explicit --scope wins over routes; otherwise routes pick the commands for the changed files

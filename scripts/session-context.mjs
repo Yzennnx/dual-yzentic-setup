@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { checkAll as checkMockups } from './mockups-check.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,6 +36,30 @@ function blueprintLine(root) {
       + 'then tailor-setup once a spec exists; `npm run init:project` is the shortcut when an archetype fits.';
   } catch {
     return 'Blueprint: project-blueprint.json is not valid JSON.';
+  }
+}
+
+/**
+ * Stale or unmapped mockups across the designs that have a map, then designs that link mockups with no map.
+ * At most 5 lines; empty when all is well.
+ */
+export function mockupLines(root) {
+  try {
+    const { problems, noMap } = checkMockups(root);
+    const lines = problems.slice(0, noMap.length > 0 ? 4 : 5);
+    if (problems.length > lines.length) lines[lines.length - 1] = `... ${problems.length - lines.length + 1} more mockup problems (npm run mockups:check)`;
+    if (noMap.length > 0) lines.push(`no mockup map: ${noMap.join(', ')}`);
+    return lines;
+  } catch {
+    return [];
+  }
+}
+
+function modeLine(root) {
+  try {
+    return `Mode: ${JSON.parse(readText(path.resolve(root, 'project-blueprint.json'))).workflow?.mode ?? 'classic'}`;
+  } catch {
+    return 'Mode: classic';
   }
 }
 
@@ -92,7 +117,9 @@ function readyToMergeBlock(root) {
 export function buildContext(root = REPO_ROOT) {
   return [
     'Project session context (injected by .claude/settings.json):',
+    ...mockupLines(root),
     blueprintLine(root),
+    modeLine(root),
     'Process by tier (the surface sets the tier, not the size): Tier 1 = fast-track only, no documents or agents. '
       + 'Tier 2 = no risky surface: design in chat, wait for a yes, no spec or plan file, no review. '
       + 'Tier 3 = a risky surface (schema, sync, shared domain rules, API, auth, app interfaces): design in chat ending '

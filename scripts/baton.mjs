@@ -163,6 +163,17 @@ export function readVerifyConfig(blueprintPath = BLUEPRINT_PATH) {
 }
 
 /**
+ * The blueprint's `workflow.mode`: 'agy-build' or 'classic' (the default).
+ */
+export function readWorkflowMode(blueprintPath = BLUEPRINT_PATH) {
+  try {
+    return JSON.parse(readFileSync(blueprintPath, 'utf-8')).workflow?.mode === 'agy-build' ? 'agy-build' : 'classic';
+  } catch {
+    return 'classic';
+  }
+}
+
+/**
  * The blueprint's optional `project.risky_paths`: an array of path prefixes, or null.
  */
 export function readRiskyPaths(blueprintPath = BLUEPRINT_PATH) {
@@ -374,6 +385,9 @@ export async function main() {
     const delegations = state.delegations ?? [];
     const tokens = delegations.reduce((sum, d) => sum + (d.total_tokens || 0), 0);
     console.log(`Antigravity:  ${delegations.length} launches, ${tokens} tokens (last 20)`);
+    const perModel = {};
+    for (const d of delegations) if (d.model) perModel[d.model] = (perModel[d.model] ?? 0) + 1;
+    if (Object.keys(perModel).length > 0) console.log(`Models:       ${Object.entries(perModel).map(([m, n]) => `${m} x${n}`).join(', ')} (last: ${delegations.at(-1)?.model ?? '?'})`);
     if ((state.tests_owed ?? []).length > 0) console.log(`Tests owed:   ${state.tests_owed.join(', ')}`);
     console.log('=========================\n');
     process.exit(0);
@@ -509,7 +523,9 @@ export async function main() {
     }
 
     // An explicit --scope names the test that covers the change, so no tests are owed
-    const owesTests = shouldWriteTests({ tier, files: modified, disabled: disabled || Boolean(scopeOverride) });
+    // In agy-build mode the build job already wrote the tests the tasks name; the Gatekeeper does not write more
+    const agyBuild = readWorkflowMode(resolve(root, 'project-blueprint.json')) === 'agy-build';
+    const owesTests = shouldWriteTests({ tier, files: modified, disabled: disabled || Boolean(scopeOverride) || agyBuild });
     if (owesTests && debug) {
       const sources = modified.filter(isSourceFile);
       state.tests_owed = [...new Set([...(state.tests_owed ?? []), ...sources])];

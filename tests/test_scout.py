@@ -67,8 +67,8 @@ class TestScout(unittest.TestCase):
     def test_scout_uses_the_fast_model_and_records_it(self):
         self.scout("add login")
         args = self.recorded_args()[0]
-        self.assertEqual(args[args.index("--model") + 1], "gemini-4-argon-medium")
-        self.assertEqual(self.sync_state()["delegations"][0]["model"], "gemini-4-argon-medium")
+        self.assertEqual(args[args.index("--model") + 1], "gemini-4-argon-low")
+        self.assertEqual(self.sync_state()["delegations"][0]["model"], "gemini-4-argon-low")
 
     def test_a_blueprint_without_a_source_spec_names_only_the_plan(self):
         root = self.make_fixture(Path(self.tmp.name) / "plain")

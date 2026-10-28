@@ -10,11 +10,13 @@ import { fileURLToPath } from 'node:url';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-const DEFAULT_MODEL_DEEP = 'gemini-4-argon-medium';
-const DEFAULT_MODEL_FAST = 'gemini-4-argon-medium';
-const FAST_JOBS = ['scout', 'diagnose'];
+// Each chain is tried in order: the next model runs when a launch fails on quota, availability or the model itself
+const CHAIN_DEEP = ['gemini-4-argon-medium', 'claude-sonnet-5-5-medium', 'gpt-oss-120b-medium'];
+const CHAIN_FAST = ['gemini-4-argon-low', 'claude-sonnet-5-5-low', 'gpt-oss-120b-medium'];
+const FAST_JOBS = ['scout'];
+const MODEL_ERROR = /quota|rate.?limit|exhaust|unavailable|overloaded|capacity|not found|unknown model|unsupported model|invalid model|no access|(429|503)/i;
 const DEFAULT_TIMEOUT_SECONDS = 600;
-const JOB_TIMEOUT_SECONDS = { review: 1200 }; // a review reads the whole branch and outlasts the other jobs
+const JOB_TIMEOUT_SECONDS = { review: 1200, build: 1800, qa: 1800 }; // a review reads the whole branch and outlasts the other jobs
 const DEFAULT_KILL_GRACE_SECONDS = 15; // agy gets this long past its own --print-timeout before we kill it
 const DELEGATION_LIMIT = 20;
 
@@ -25,13 +27,30 @@ export const PLAIN_PATHS_RULE =
   'Reply in plain text. Refer to files by repo-relative path with forward slashes. Do not use Markdown links or absolute paths.';
 
 /**
- * The model for a job: scout and diagnose are quick lookups and use the fast model (BATON_AGY_MODEL_FAST), every other
- * job uses the deep one (BATON_AGY_MODEL_DEEP). BATON_AGY_MODEL, when set, overrides both.
+ * The models to try for a job, in order. Scout uses the low chain; every other job (build, review, tests, diagnose, qa)
+ * uses the deep chain. BATON_AGY_MODEL_FAST / BATON_AGY_MODEL_DEEP replace the first entry of their chain.
+ * BATON_AGY_MODEL, when set, is the only model for every job.
+ */
+export function modelsForJob(job) {
+  if (process.env.BATON_AGY_MODEL) return [process.env.BATON_AGY_MODEL];
+  const fast = FAST_JOBS.includes(job);
+  const [first, ...rest] = fast ? CHAIN_FAST : CHAIN_DEEP;
+  const override = fast ? process.env.BATON_AGY_MODEL_FAST : process.env.BATON_AGY_MODEL_DEEP;
+  return [override || first, ...rest];
+}
+
+/**
+ * The first model for a job.
  */
 export function modelForJob(job) {
-  if (process.env.BATON_AGY_MODEL) return process.env.BATON_AGY_MODEL;
-  if (FAST_JOBS.includes(job)) return process.env.BATON_AGY_MODEL_FAST || DEFAULT_MODEL_FAST;
-  return process.env.BATON_AGY_MODEL_DEEP || DEFAULT_MODEL_DEEP;
+  return modelsForJob(job)[0];
+}
+
+/**
+ * True when a failed launch is worth retrying on the next model: a quota, availability or model error, not a timeout or a denial.
+ */
+export function shouldTryNextModel({ ok, reason, detail }) {
+  return !ok && reason === 'failed' && MODEL_ERROR.test(detail ?? '');
 }
 
 /**
@@ -78,11 +97,27 @@ function firstLines(text, count) {
 }
 
 /**
- * Launch one headless Antigravity job. Success is read from the JSON, never from the exit code.
+ * Launch one headless Antigravity job, moving down the job's model chain on quota, availability or model errors.
+ * The entry records the model that ran last, and `tried` when more than one did.
  */
-export function launchAgy({ job, prompt, allowEdits = false, timeoutSeconds, root = REPO_ROOT }) {
+export function launchAgy(options) {
+  const models = modelsForJob(options.job);
+  const tried = [];
+  let result;
+  for (const model of models) {
+    tried.push(model);
+    result = launchOnce(model, options);
+    if (!shouldTryNextModel(result)) break;
+  }
+  if (tried.length > 1) result.entry.tried = tried;
+  return result;
+}
+
+/**
+ * One launch on one model. Success is read from the JSON, never from the exit code.
+ */
+function launchOnce(model, { job, prompt, allowEdits = false, timeoutSeconds, root = REPO_ROOT }) {
   const cmd = process.env.BATON_AGY_CMD || 'agy';
-  const model = modelForJob(job);
   const seconds = timeoutSeconds ?? timeoutForJob(job);
 
   const agyArgs = ['--print', prompt, '--output-format', 'json', '--print-timeout', `${seconds}s`, '--model', model];

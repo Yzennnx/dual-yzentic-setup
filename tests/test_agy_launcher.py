@@ -73,9 +73,9 @@ class TestAgyLauncher(unittest.TestCase):
     def test_model_for_each_job(self):
         jobs = ["scout", "diagnose", "write_tests", "review", "unknown"]
         cases = [
-            ({}, ["gemini-4-argon-medium"] * 2 + ["gemini-4-argon-medium"] * 3),
-            ({"BATON_AGY_MODEL_FAST": "fast-x"}, ["fast-x"] * 2 + ["gemini-4-argon-medium"] * 3),
-            ({"BATON_AGY_MODEL_DEEP": "deep-x"}, ["gemini-4-argon-medium"] * 2 + ["deep-x"] * 3),
+            ({}, ["gemini-4-argon-low"] + ["gemini-4-argon-medium"] * 4),
+            ({"BATON_AGY_MODEL_FAST": "fast-x"}, ["fast-x"] + ["gemini-4-argon-medium"] * 4),
+            ({"BATON_AGY_MODEL_DEEP": "deep-x"}, ["gemini-4-argon-low"] + ["deep-x"] * 4),
             ({"BATON_AGY_MODEL": "all-x", "BATON_AGY_MODEL_FAST": "fast-x", "BATON_AGY_MODEL_DEEP": "deep-x"}, ["all-x"] * 5),
         ]
         for env, expected in cases:

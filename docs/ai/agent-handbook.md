@@ -72,6 +72,7 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
 | **Realistic mock & seed data for demos** | [`demo-seed-data`](../../.agents/skills/demo-seed-data/SKILL.md) | Populates dashboards with avatars, realistic names, dynamic metrics |
 | **Kickoff of an uninitialized project: surfacing and mapping open decisions** | [`wayfinder`](../../.agents/skills/wayfinder/SKILL.md) | Tags open decisions, then hands off to brainstorming or charts a ticket map in `docs/wayfinder/` |
 | **Tailoring the repo to a brainstormed spec at kickoff** | [`tailor-setup`](../../.agents/skills/tailor-setup/SKILL.md) | Derives skills, roadmap, rules, scaffold, and verify commands from the project spec |
+| **Switching between classic and agy-build workflow** | [`workflow`](../../.agents/skills/workflow/SKILL.md) | `/workflow agy-build` or `/workflow classic`: sets `workflow.mode` in the blueprint |
 | **Micro-tasks, cosmetic CSS & quick fixes** | [`fast-track`](../../.agents/skills/fast-track/SKILL.md) | Express-lane protocol for token-efficient edits without test ceremony |
 | **Web application browser testing** | [`webapp-testing`](../../.agents/skills/webapp-testing/SKILL.md) | Headless Playwright automation and DOM verification |
 | **Managing API keys & secrets safely** | [`varlock`](../../.agents/skills/varlock/SKILL.md) | Zero-leak secret management |

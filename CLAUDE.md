@@ -64,6 +64,7 @@ Risky surfaces (AGENTS.md section 1): the shape of persisted data (schemas, migr
 When a task turns out to touch a risky surface, stop, say so, and move up. Never move down mid-task.
 
 ### 3.2 Plan on the Session Model, Build on Sonnet
+- Two modes, set by `workflow.mode` in the blueprint and switched with `/workflow` ([skill](.agents/skills/workflow/SKILL.md)). **classic**: the rules below. **agy-build**: Claude designs and plans only, each task naming files, tests and mockups; each task is dispatched to the Antigravity `build` job (`npm run agy:build`), which writes code and tests and commits once per task; Claude reads the diff against the design and runs `npm run verify:agent`. The `builder` agent is not used in agy-build.
 - Do not implement plan tasks inline. Hand Tier 3 plan tasks to the `builder` agent ([`.claude/agents/builder.md`](.claude/agents/builder.md)), which runs on Sonnet with a fresh context. Give it the plan path, the task numbers, and the branch.
 - One `builder` run per branch, one commit per task. Split only when a single run would be too large to review. Every run starts cold, so each extra run costs minutes.
 - Tier 2 changes may also go to `builder` once their design is approved. Tier 1 edits are done directly.

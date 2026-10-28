@@ -48,6 +48,7 @@ export function parseMap(text) {
     rows.push({
       file: cellText(cells[0] ?? '').replace(/^.*?mockups\//, ''),
       task: cells[1] ?? '',
+      component: cellText(cells[2] ?? ''),
       skip: cells.find(c => /^skip:/i.test(c)) ?? null,
       fingerprint: (cells[3] ?? '').replace(/`/g, '').trim().toLowerCase()
     });

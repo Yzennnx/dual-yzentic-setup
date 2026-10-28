@@ -49,6 +49,11 @@
       "rules_preset": "minimal"
     }
   },
+  "rules": {
+    "source": [],
+    "ignore": [],
+    "tests": ["**/*.test.*", "**/*.spec.*", "**/test_*.py"]
+  },
   "workflow": {
     "max_workers": 1,
     "orca_repo_id": "",

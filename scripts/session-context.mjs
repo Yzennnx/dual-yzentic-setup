@@ -11,6 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { checkAll as checkMockups } from './mockups-check.mjs';
+import { checkRules } from './rules-check.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,6 +51,18 @@ export function mockupLines(root) {
     if (problems.length > lines.length) lines[lines.length - 1] = `... ${problems.length - lines.length + 1} more mockup problems (npm run mockups:check)`;
     if (noMap.length > 0) lines.push(`no mockup map: ${noMap.join(', ')}`);
     return lines;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * One line from the rules check ("rules: ok · 12 orphan files · 38 rules without a test"); empty while no feature doc exists.
+ */
+export function rulesLine(root) {
+  try {
+    const result = checkRules(root);
+    return result.skipped ? [] : [result.summary + (result.problems.length > 0 ? ' (npm run rules:check)' : '')];
   } catch {
     return [];
   }
@@ -118,6 +131,7 @@ export function buildContext(root = REPO_ROOT) {
   return [
     'Project session context (injected by .claude/settings.json):',
     ...mockupLines(root),
+    ...rulesLine(root),
     blueprintLine(root),
     modeLine(root),
     'Process by tier (the surface sets the tier, not the size): Tier 1 = fast-track only, no documents or agents. '

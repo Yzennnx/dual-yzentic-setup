@@ -18,11 +18,6 @@ class TestRulesIntegrity(unittest.TestCase):
             self.assertGreater(len(content.strip()), 100, f"Rule file {filename} must not be empty")
 
     def test_rule_files_structure(self):
-        readme = self.rules_dir / "README.md"
-        if readme.exists():
-            content = readme.read_text(encoding="utf-8")
-            self.assertIn("When to Read What", content, "README.md must contain a 'When to Read What' routing table")
-
         domain_files = ["requirements.md", "frontend.md", "backend.md"]
         for filename in domain_files:
             rule_file = self.rules_dir / filename

@@ -15,6 +15,7 @@ import { isCosmeticFile, isSourceFile, isTestFile, resolveChangeSet, fingerprint
 import { gatekeeperDisabled, shouldWriteTests, writeTests, repairTests, shouldDiagnose, diagnoseFailure, writeHandoff } from './gatekeeper.mjs';
 import { describeFailure } from './agy.mjs';
 import { checkAll as checkMockups } from './mockups-check.mjs';
+import { checkRules } from './rules-check.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -461,6 +462,13 @@ export async function main() {
         for (const problem of problems) console.error(`  ${problem}`);
         process.exit(1);
       }
+    }
+    // Feature docs must match the code: drift, orphans, dead links, untested rules (skipped until a feature doc exists)
+    const rulesResult = checkRules(root);
+    if (rulesResult.problems.length > 0) {
+      console.error('\n[Baton] FAIL: docs/rules out of date (npm run rules:check):');
+      for (const problem of rulesResult.problems) console.error(`  ${problem}`);
+      process.exit(1);
     }
     const { command: testCmd, isExpress } = resolveTestExecution(tier, scopeOverride, verifyConfig);
     const disabled = gatekeeperDisabled(args);

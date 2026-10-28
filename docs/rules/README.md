@@ -1,23 +1,31 @@
-# Web Development Rules Directory
+# Rules
 
-This directory defines the modular domain standards for modern full-stack web application development within `Yzentic-setup`. It standardizes patterns across **Next.js (React 19)**, **Tailwind CSS**, **Node/Bun**, **Prisma/Drizzle**, and **Zod**.
+The design of this project lives here, split by feature. Read [`invariants.md`](invariants.md) and the one feature doc your task names (about 150 lines together), not everything.
 
----
+## Mission
 
-## When to Read What (On-Demand Agent Routing)
+_Replace: one or two sentences on what this project is for and who uses it._
 
-To preserve context window tokens, agents MUST NOT load all rules upfront. Consult only the specific rule file matching your active task:
+## Principles
 
-| Developer / Agent Task | Rule File | Purpose & Focus |
-| :--- | :--- | :--- |
-| **Scoping a feature, writing PRD, or defining user stories** | [`requirements.md`](requirements.md) | Given/When/Then acceptance criteria, mandatory 4 UI states, and Definition of Done |
-| **Building UI components, forms, state, styling, or layouts** | [`frontend.md`](frontend.md) | Server-first RSC, state boundaries, Tailwind tokens, WCAG 2.1 AA A11y, Core Web Vitals |
-| **Creating API endpoints, database mutations, schemas, or auth** | [`backend.md`](backend.md) | Zod validation, RFC error envelopes, Prisma/Drizzle transactions, HttpOnly cookies, CSRF, CSP |
-| **Testing strategy, TDD cycles, branching, or PR reviews** | [`docs/ai/workflows.md`](../ai/workflows.md) | TDD Red-Green-Refactor, Vitest/RTL/Playwright pyramid, and PR submission checklist |
+1. **One owner per file.** Each feature doc lists the code it owns in its `owns:` front matter; `architecture.md` owns the cross-cutting files.
+2. **Docs change with code.** `npm run rules:check` fails verify when an owned file changes without its doc, when a new source file has no owner, and when a changed rule has no test citing its ID.
+3. **Rule IDs never change.** `[feature#3]` stays `[feature#3]`; a deleted rule leaves a gap and a new rule takes the next number. `(manual)` marks a rule only a hand test can prove.
+4. **Tests cite rules.** A test name or a `// covers feature#3` comment links a test to its rule.
 
----
+## Layout
 
-## Architectural Principles
-1. **Single Source of Truth:** Domain rules reside here; procedural rules reside in [`AGENTS.md`](../../AGENTS.md) and [`docs/ai/workflows.md`](../ai/workflows.md).
-2. **Glanceable & Token-Lean:** Rules are structured around concise principles, checklists, and Dos/Don'ts tables rather than heavy inline code blocks.
-3. **Automated Verification:** All rule documents are verified by [`tests/test_rules_integrity.py`](../../tests/test_rules_integrity.py).
+| File | What it holds |
+| :--- | :--- |
+| [`invariants.md`](invariants.md) | Promises that must never break (`inv#1`, `inv#2`, ...) |
+| [`architecture.md`](architecture.md) | Stack, apps, how they talk, data model, conventions, testing |
+| `features/<feature>.md` | One per feature: what the user sees, rules, how it works, limits ([`_example.md`](features/_example.md) shows the format) |
+
+## Feature map
+
+`npm run rules:map` regenerates this table; `npm run rules:map -- <feature>` prints one feature.
+
+<!-- rules:map -->
+| Feature | Doc | Tasks open/done | Boards | Rules | With a test |
+| --- | --- | --- | --- | --- | --- |
+<!-- /rules:map -->

@@ -70,13 +70,16 @@ When a task turns out to touch a risky surface, stop, say so, and move up. Never
 - Read the builder's report, not its transcript. Act on its "Deviations" and "Open" lines.
 - Run builders one at a time. They share the working tree.
 
+### 3.2b Mockup Map
+Any design that references mockups ends its task list with a table: mockup file, task, target component, fingerprint. It covers EVERY file in the referenced mockup folder, or marks the row `skip: <reason>`. `npm run mockups:check -- <design.md>` must pass before asking for the yes. The builder opens every mockup mapped to its task before coding, reports a `Mockups:` line, and updates the fingerprint after rebuilding a page to match.
+
 ### 3.3 Session Length
 - **At the start of a session,** a hook injects [`.agents/sync/session.md`](.agents/sync/session.md). Start from it and open only the files it lists. Do not re-explore what it already records.
 - **After each task,** add a one-line note to its `docs/PLAN.md` line (what landed, commit, what is left). That note is the record if the session ends early.
 - **Continue in the same session** with the next task only when all hold:
   1. The next task is Tier 1 or Tier 2. A Tier 3 task always starts in a fresh session.
   2. It works in the same app and area as the tasks already done (for example one app's UI, or the API); a new area means a new session.
-  3. The session has finished fewer than 3 tasks and has not been auto-compacted.
+  3. The session has not been auto-compacted. There is no cap on the number of tasks, and connected tasks may share one design and one yes.
 - **When a check fails, or the developer ends the session,** overwrite `session.md` with at most 20 lines: what was done, branch and last commit, decisions made and why, what is next, what awaits a hand test, and the files the next session should open. Then tell the developer to start a new session.
 - The orchestrator may also start a worker (section 4) for a waiting task instead of doing it here.
 

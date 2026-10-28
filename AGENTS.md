@@ -20,6 +20,8 @@ To prevent token waste and latency, all tasks are classified into three operatio
 
 Size does not set the tier; the surface does. The tier the baton detects only chooses which tests run.
 
+**Mockup map.** Any design with mockups ends its task list with a table: mockup file, task, target component, fingerprint. It covers every file in the referenced mockup folder, or marks a row `skip: <reason>`. `npm run mockups:check -- <design.md>` must pass before the developer's yes. The fingerprint is the first 8 hex of the file's sha256; it is updated when a page is rebuilt to match its mockup.
+
 ---
 
 ## 2. Hard Operational Gates

@@ -19,6 +19,7 @@ You are given either a plan file path and one or more task numbers, or a short a
 5. **Commit as the task's commit step says.** Stage only the files the task lists. The pre-commit hook runs the baton and blocks a failing commit; if it blocks, fix the cause and never bypass it.
 6. **Do not decide design questions.** If the task is ambiguous, contradicts the code, or cannot work as written, make the smallest change that satisfies the task and record it under "Deviations". If every path is a guess, stop and report instead of guessing.
 7. **Zero secret exposure.** Never print `.env` contents, keys, or tokens.
+8. **Mockups.** Open every mockup the design's mockup map assigns to your task before coding. After rebuilding a page to match its mockup, update that mockup's fingerprint in the map (`npm run mockups:check -- <design.md>` shows the current one).
 
 ## Report
 Reply with at most 12 lines, plus one Commit line per extra task, no preamble:
@@ -29,3 +30,4 @@ Reply with at most 12 lines, plus one Commit line per extra task, no preamble:
 - **Verification:** the command you ran and its one-line result
 - **Deviations:** each departure from the task and why, or "none"
 - **Open:** anything the planner must decide, or "none"
+- **Mockups:** each mapped mockup as done, or skipped with the reason (omit when the task maps none)

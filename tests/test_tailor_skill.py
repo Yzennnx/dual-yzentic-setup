@@ -28,12 +28,14 @@ class TestTailorSkill(unittest.TestCase):
             "npm run tailor",
             "npm run verify:agent",
             "superpowers:brainstorming",
-            "source_spec",
+            "source_rules",
+            "docs/rules",
+            "rules.source",
+            "features",
+            "rules:check",
+            "owns",
             "test_scoped",
             "--force",
-            "## Core Standards",
-            "## Dos and Don'ts",
-            "When to Read What",
             "tailor-setup",
             "fast-track",
             "caveman",
@@ -47,7 +49,6 @@ class TestTailorSkill(unittest.TestCase):
         self.assertIn("tailor-setup", handbook)
         agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("npm run tailor", agents)
-        self.assertIn("init:project", agents)
 
 
 if __name__ == "__main__":

@@ -22,7 +22,7 @@ class TestTailorValidation(unittest.TestCase):
         return json.loads(res.stdout)
 
     def problems(self, project):
-        return self.validate({"project": project})
+        return self.validate({"project": project, "rules": {"source": ["src/**/*.ts"]}})
 
     def test_valid_manifest_has_no_problems(self):
         self.assertEqual(self.problems(VALID_PROJECT), [])
@@ -32,8 +32,12 @@ class TestTailorValidation(unittest.TestCase):
             (lambda p: p.update(name=""), "project.name"),
             (lambda p: p.update(description="  "), "project.description"),
             (lambda p: p.update(archetype="fullstack-web"), "project.archetype"),
-            (lambda p: p.update(source_spec="docs/specs/no.md"), "project.source_spec"),
-            (lambda p: p.update(source_spec="../outside.md"), "project.source_spec"),
+            (lambda p: p.update(source_rules="docs/rules/no.md"), "project.source_rules"),
+            (lambda p: p.update(source_rules="../outside.md"), "project.source_rules"),
+            (lambda p: p.pop("source_spec", None) or p.pop("source_rules"), "project.source_rules"),
+            (lambda p: p["roadmap"][0].update(features=[]), "project.roadmap[0].features"),
+            (lambda p: p["roadmap"][0].pop("features"), "project.roadmap[0].features"),
+            (lambda p: p["roadmap"][1].update(features=["canvas", "nope"]), "project.roadmap[1].features"),
             (lambda p: p.update(stack=[]), "project.stack"),
             (lambda p: p.update(developer=""), "project.developer"),
             (lambda p: p.update(developer=7), "project.developer"),
@@ -50,7 +54,7 @@ class TestTailorValidation(unittest.TestCase):
             (lambda p: p.update(developer=" "), "project.developer"),
             (lambda p: p["roadmap"][0].update(description=""), "project.roadmap[0].description"),
             (lambda p: p["roadmap"].__setitem__(1, "not a task"), "project.roadmap[1]"),
-            (lambda p: p.update(source_spec=str(self.root / "docs" / "specs" / "demo-design.md")), "project.source_spec"),
+            (lambda p: p.update(source_rules=str(self.root / "docs" / "rules" / "README.md")), "project.source_rules"),
             (lambda p: p.update(skills=["alpha", "../alpha"]), "project.skills"),
             (lambda p: p.update(skills=["_staging"]), "project.skills"),
         ]
@@ -61,6 +65,18 @@ class TestTailorValidation(unittest.TestCase):
                 found = self.problems(project)
                 self.assertEqual(len(found), 1, found)
                 self.assertTrue(found[0].startswith(expected), found[0])
+
+    def test_rules_source_globs_are_required(self):
+        for rules in ({}, {"source": []}, {"source": [3]}):
+            with self.subTest(rules=rules):
+                found = self.validate({"project": VALID_PROJECT, "rules": rules})
+                self.assertEqual(len(found), 1, found)
+                self.assertTrue(found[0].startswith("rules.source"), found[0])
+
+    def test_arch_needs_no_feature_doc(self):
+        project = copy.deepcopy(VALID_PROJECT)
+        project["roadmap"][0]["features"] = ["arch"]
+        self.assertEqual(self.problems(project), [])
 
     def test_e2e_command_is_optional_and_valid_when_text(self):
         project = copy.deepcopy(VALID_PROJECT)

@@ -255,7 +255,7 @@ export function resolveTestExecution(tier, scope, verify = null) {
 }
 
 /**
- * Spec paths that PLAN.md links (`](specs/...)`) or the blueprint names as source_spec but that do not exist on disk.
+ * Spec paths that PLAN.md links (`](specs/...)`) or the blueprint names as source_rules but that do not exist on disk.
  */
 export function missingSpecs(root) {
   const missing = [];
@@ -264,7 +264,8 @@ export function missingSpecs(root) {
     for (const match of plan.matchAll(/\]\((specs\/[^)#\s]+)/g)) missing.push(`docs/${match[1]}`);
   } catch { /* no plan */ }
   try {
-    const spec = JSON.parse(readFileSync(resolve(root, 'project-blueprint.json'), 'utf-8')).project?.source_spec;
+    const project = JSON.parse(readFileSync(resolve(root, 'project-blueprint.json'), 'utf-8')).project;
+    const spec = project?.source_rules || project?.source_spec;
     if (spec) missing.push(spec);
   } catch { /* no blueprint */ }
   return [...new Set(missing)].filter(path => !existsSync(resolve(root, path)));

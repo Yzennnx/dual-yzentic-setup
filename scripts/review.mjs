@@ -68,11 +68,11 @@ function repoPath(root, path) {
 }
 
 /**
- * The blueprint's project.source_spec, or null when there is no blueprint or no spec.
+ * The blueprint's project.source_rules (or the old source_spec), or null when there is no blueprint or no spec.
  */
 function readSourceSpec(root) {
   try {
-    return JSON.parse(readFileSync(resolve(root, 'project-blueprint.json'), 'utf-8')).project?.source_spec || null;
+    return ((project) => project?.source_rules || project?.source_spec)(JSON.parse(readFileSync(resolve(root, 'project-blueprint.json'), 'utf-8')).project) || null;
   } catch {
     return null;
   }

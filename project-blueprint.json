@@ -3,7 +3,7 @@
   "project": {
     "name": "dual-yzentic-setup",
     "description": "Dual-agent development setup template for Claude Code and Antigravity",
-    "archetype": "fullstack-web",
+    "archetype": "custom",
     "stack": {
       "frontend": "Next.js (App Router) + Tailwind CSS",
       "backend": "Node.js / Route Handlers",
@@ -12,47 +12,14 @@
     },
     "developer": "Developer"
   },
-  "archetypes": {
-    "fullstack-web": {
-      "name": "Full-Stack Web Application (Next.js / Vite + Backend)",
-      "keep_skills": [
-        "caveman", "ponytail", "ui-ux-pro-max", "impeccable",
-        "archify", "webapp-testing", "owasp-security", "varlock",
-        "demo-seed-data", "fast-track"
-      ],
-      "rules_preset": "fullstack-web"
-    },
-    "ai-agent-app": {
-      "name": "AI Agent / LLM Pipeline (FastAPI / Node + Multi-Agent)",
-      "keep_skills": [
-        "caveman", "ponytail", "prompt-engineer", "agentic-eval",
-        "varlock", "owasp-security", "demo-seed-data",
-        "archify", "fast-track"
-      ],
-      "rules_preset": "ai-agent"
-    },
-    "frontend-dashboard": {
-      "name": "Frontend Dashboard / SPA (Vite + React + Tailwind)",
-      "keep_skills": [
-        "caveman", "ponytail", "ui-ux-pro-max", "impeccable",
-        "design-system", "slides", "banner-design", "demo-seed-data",
-        "webapp-testing", "fast-track"
-      ],
-      "rules_preset": "frontend-dashboard"
-    },
-    "minimal": {
-      "name": "Lean Starter (Core Essentials Only)",
-      "keep_skills": [
-        "caveman", "ponytail", "ui-ux-pro-max", "impeccable",
-        "demo-seed-data", "fast-track"
-      ],
-      "rules_preset": "minimal"
-    }
-  },
   "rules": {
     "source": [],
     "ignore": [],
-    "tests": ["**/*.test.*", "**/*.spec.*", "**/test_*.py"]
+    "tests": [
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/test_*.py"
+    ]
   },
   "workflow": {
     "max_workers": 1,

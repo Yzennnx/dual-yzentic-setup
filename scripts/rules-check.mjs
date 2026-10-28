@@ -114,8 +114,9 @@ export function planTasks(root) {
   for (const line of text.split('\n')) {
     const m = line.match(/^\s*[-*] \[( |x|X)\] (.*)$/);
     if (!m) continue;
-    const head = m[2].split(':')[0];
-    tasks.push({ done: m[1] !== ' ', text: m[2], tags: [...head.matchAll(/\[([a-z][a-z0-9-]*)\]/g)].map(t => t[1]) });
+    const text = m[2].replace(/\*\*/g, '');
+    const head = text.split(':')[0];
+    tasks.push({ done: m[1] !== ' ', text, tags: [...head.matchAll(/\[([^\]]+)\]/g)].flatMap(t => t[1].split(/[,\s]+/)).filter(Boolean) });
   }
   return tasks;
 }

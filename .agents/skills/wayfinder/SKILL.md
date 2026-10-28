@@ -1,6 +1,6 @@
 ---
 name: wayfinder
-description: Project kickoff front door. When project-blueprint.json is uninitialized, surfaces the open decisions, then either hands off to brainstorming (no fog) or charts a map of decision tickets in docs/wayfinder/ and resolves them one per session until the project spec is clear. Use at kickoff, or when the user says "wayfinder", "chart a map", or "work the map". Planning only; never writes src/.
+description: Project kickoff front door. When project-blueprint.json is uninitialized, surfaces the open decisions, then either hands off to brainstorming (no fog) or charts a map of decision tickets in docs/wayfinder/ and resolves them one per session until the project design can be written into docs/rules/. Use at kickoff, or when the user says "wayfinder", "chart a map", or "work the map". Planning only; never writes src/.
 version: 1.0.0
 ---
 
@@ -47,10 +47,10 @@ Resolution adds `## Answer` (research also `## Findings`).
 
 ## Mode 1: Kickoff (blueprint `status: "uninitialized"`)
 
-1. **Name the destination.** At kickoff it is always "the project spec".
+1. **Name the destination.** At kickoff it is always "the project design in `docs/rules/`" (invariants, architecture, one feature doc per feature).
 2. **Breadth-first pass.** Ask the developer what they are building, then show a tagged list of the open decisions, each either *answerable now* or fog tagged `research` (needs outside facts), `prototype` (needs something to react to), `task` (manual work first), or `blocked-by <other decision>`.
 3. **Verdict.** Two or more fog items, or any fog item that blocks other decisions: **chart a map**. Exactly one non-blocking fog item: resolve it inline, then brainstorm. Zero fog: no map. The developer may override either way.
-4. **No map:** stop and hand off to `superpowers:brainstorming` to produce a spec in `docs/specs/`, then `tailor-setup`.
+4. **No map:** stop and hand off to `superpowers:brainstorming`, with this override: the design is written straight into `docs/rules/` (`invariants.md`, `architecture.md`, one full feature doc per feature with `owns: []`, see `features/_example.md`); the developer reviews the `docs/rules/` diff as the spec; no separate `docs/specs/<project>-design.md`. Then `tailor-setup`.
 5. **Map:** write `docs/wayfinder/map.md` (Destination, Notes, empty Decisions so far, fog in Not yet specified, Out of scope) and a ticket file for each sharply specifiable question. Create tickets first, then wire `blocked_by` in a second pass. Fire each `research` ticket as a parallel subagent (Explore or general-purpose) that writes `## Findings` into the ticket; no branch.
 6. **Stop.** Charting is one session. Update `.agents/sync/session.md` naming the first frontier ticket, and tell the developer to start a new session.
 
@@ -69,7 +69,7 @@ Resolution adds `## Answer` (research also `## Findings`).
 
 ## Exit
 
-No open tickets and no fog left: collapse Decisions so far (reading the tickets for detail) into `docs/specs/YYYY-MM-DD-<project>-design.md`, move `docs/wayfinder/` to `docs/specs/archive/wayfinder-<date>/`, and hand off to `tailor-setup`.
+No open tickets and no fog left: collapse Decisions so far (reading the tickets for detail) into `docs/rules/` (invariants, architecture, one feature doc per feature), move `docs/wayfinder/` to `docs/specs/archive/wayfinder-<date>/`, and hand off to `tailor-setup`.
 
 ---
 

@@ -146,38 +146,6 @@ export function syncSkillsToList(names, { root = REPO_ROOT } = {}) {
 }
 
 /**
- * Sync skills against an archetype
- */
-export function syncSkillsToArchetype(archetypeName, { root = REPO_ROOT } = {}) {
-  ensureDirs({ root });
-
-  const BLUEPRINT_PATH = path.resolve(root, 'project-blueprint.json');
-  if (!fs.existsSync(BLUEPRINT_PATH)) {
-    throw new Error(`project-blueprint.json not found at ${BLUEPRINT_PATH}`);
-  }
-
-  const blueprint = JSON.parse(fs.readFileSync(BLUEPRINT_PATH, 'utf-8'));
-  const archetype = blueprint.archetypes?.[archetypeName];
-
-  if (!archetype) {
-    const available = Object.keys(blueprint.archetypes || {}).join(', ');
-    throw new Error(`Archetype '${archetypeName}' not found. Available archetypes: ${available}`);
-  }
-
-  // keep_skills may name skills that are not installed; those are ignored
-  const keepSkills = archetype.keep_skills || [];
-  const currentSkills = listSkills({ root });
-  const known = new Set([...currentSkills.active, ...currentSkills.archived]);
-  const res = syncSkillsToList(keepSkills.filter(name => known.has(name)), { root });
-
-  return {
-    archetype: archetypeName,
-    ...res,
-    active_count: new Set(keepSkills).size
-  };
-}
-
-/**
  * Pull `--root <path>` out of the CLI args. Returns the resolved root and the remaining args.
  */
 function takeRoot(args) {
@@ -233,14 +201,7 @@ export async function main() {
       process.exit(0);
     }
 
-    if (command === 'sync') {
-      const name = args[1] || 'fullstack-web';
-      const res = syncSkillsToArchetype(name, { root });
-      console.log(`[Skills Manager] Synced to archetype '${res.archetype}'. Active: ${res.active_count}, Archived: ${res.archived_count}`);
-      process.exit(0);
-    }
-
-    console.error(`Unknown command: ${command}. Use list, enable, disable, or sync.`);
+    console.error(`Unknown command: ${command}. Use list, enable, or disable.`);
     process.exit(1);
   } catch (err) {
     console.error(`[Skills Manager Error] ${err.message}`);

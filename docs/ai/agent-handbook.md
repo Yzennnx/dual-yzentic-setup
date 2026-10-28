@@ -85,6 +85,4 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
 
 | Task / Scope | Rule File | Focus & Standards |
 | :--- | :--- | :--- |
-| **Feature Scoping & Acceptance Criteria** | [`requirements.md`](../rules/requirements.md) | Given/When/Then criteria, 4 UI states (loading, empty, error, success) |
-| **Frontend Components & UX** | [`frontend.md`](../rules/frontend.md) | Server-first RSC, state boundaries, Tailwind tokens, WCAG 2.1 AA |
-| **Backend APIs, DB & Security** | [`backend.md`](../rules/backend.md) | Zod schema validation, RFC error envelopes, transaction safety |
+| **Product rules, invariants and feature docs** | [`docs/rules/README.md`](../rules/README.md) | `invariants.md` plus the one feature doc your task names; `architecture.md` for stack and conventions |

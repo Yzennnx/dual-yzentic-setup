@@ -42,7 +42,8 @@ class TestTailorApply(unittest.TestCase):
         self.assertEqual(skill_dirs(root, "skills-archive"), {"beta"})
 
         plan = (root / "docs" / "PLAN.md").read_text(encoding="utf-8")
-        self.assertIn("Task 1.1: Canvas shell", plan)
+        self.assertIn("Task 1.1 [canvas]: Canvas shell", plan)
+        self.assertIn("Task 2.1 [canvas] [arch]: Seed flows", plan)
         self.assertIn("> **For Steve and the AI agents:**", plan)
         self.assertNotIn("ORIGINAL PLAN", plan)
         for banned in ["Owner", "Hackathon", "judges", "Demo"]:
@@ -61,7 +62,10 @@ class TestTailorApply(unittest.TestCase):
         blueprint = self.read_json(root, "project-blueprint.json")
         self.assertEqual(blueprint["status"], "initialized")
         self.assertEqual(blueprint["project"], VALID_PROJECT)
-        self.assertIn("archetypes", blueprint)
+        self.assertNotIn("archetypes", blueprint)
+        self.assertEqual(blueprint["rules"]["source"], ["src/**/*.ts"])
+        self.assertEqual(blueprint["rules"]["ignore"], [])
+        self.assertIn("**/*.test.*", blueprint["rules"]["tests"])
 
     def test_manifest_without_developer_renders_the_developer(self):
         project = copy.deepcopy(VALID_PROJECT)
@@ -113,7 +117,7 @@ class TestTailorApply(unittest.TestCase):
 
         res = tailor(root, "--force")
         self.assertEqual(res.returncode, 0, res.stderr)
-        self.assertIn("Task 1.1: Canvas shell", (root / "docs" / "PLAN.md").read_text(encoding="utf-8"))
+        self.assertIn("Task 1.1 [canvas]: Canvas shell", (root / "docs" / "PLAN.md").read_text(encoding="utf-8"))
 
     def test_unparseable_blueprint(self):
         root = self.repo()
@@ -183,7 +187,7 @@ class TestTailorApply(unittest.TestCase):
         self.assertEqual(res.returncode, 0, res.stderr)
         self.assertEqual(self.read_json(root, "project-blueprint.json")["status"], "initialized")
         self.assertEqual(skill_dirs(root, "skills-archive"), {"beta"})
-        self.assertIn("Task 1.1: Canvas shell", plan.read_text(encoding="utf-8"))
+        self.assertIn("Task 1.1 [canvas]: Canvas shell", plan.read_text(encoding="utf-8"))
 
     def test_git_repo_gets_the_hook(self):
         root = self.repo()

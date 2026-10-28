@@ -41,6 +41,12 @@ class TestRoadmap(unittest.TestCase):
         self.assertIn("  - **Priority:** P0", text)
         self.assertIn("  - **Status:** Backlog", text)
 
+    def test_features_render_as_tags_after_the_id(self):
+        tasks = [{**TASKS[0], "features": ["auth", "billing"]}, {**TASKS[1], "features": ["arch"]}]
+        text = self.render(tasks)
+        self.assertIn("- [ ] **Task 1.1 [auth] [billing]: Canvas shell**", text)
+        self.assertIn("- [ ] **Task 2.1 [arch]: Seed flows**", text)
+
     def test_empty_priority_keeps_heading(self):
         text = self.render()
         self.assertIn("None yet.", text[text.index(P2):])

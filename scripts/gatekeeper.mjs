@@ -37,7 +37,7 @@ function readProject(root) {
     const project = JSON.parse(readFileSync(resolve(root, 'project-blueprint.json'), 'utf-8')).project;
     const noTestsIn = project?.verify?.no_tests_in;
     return {
-      spec: project?.source_spec || null,
+      spec: project?.source_rules || project?.source_spec || null,
       testCommand: project?.verify?.test || null,
       e2eCommand: project?.verify?.e2e || null,
       noTestsIn: Array.isArray(noTestsIn) ? noTestsIn : []
@@ -62,7 +62,7 @@ function buildWritePrompt(sources, { spec, testCommand, e2eCommand, noTestsIn },
     'The Builder changed these source files and changed no tests:',
     ...sources.map(path => `- ${path}`),
     `Read ${spec ? `docs/PLAN.md and ${spec}` : 'docs/PLAN.md'} for the intended behaviour.`,
-    'DESIGN.md is current behaviour; older specs in docs/specs are history.',
+    'The docs in docs/rules (invariants.md and the feature docs) are current behaviour; older specs in docs/specs are history.',
     ...(testCommand ? [`The project runs its tests with: ${testCommand}. Write tests that suit that runner.`] : []),
     'Rules:',
     '- Write or update tests that cover the listed changes.',

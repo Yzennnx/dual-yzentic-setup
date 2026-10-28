@@ -13,14 +13,14 @@ VALID_PROJECT = {
     "name": "AI Flow Canvas",
     "description": "Visual canvas for chaining AI steps",
     "archetype": "custom",
-    "source_spec": "docs/specs/demo-design.md",
+    "source_rules": "docs/rules/README.md",
     "stack": {"runtime": "Python 3.12 CLI"},
     "developer": "Steve",
     "skills": ["alpha", "gamma"],
     "verify": {"test": "npm test", "test_scoped": "npm test -- {scope}", "build": "npm run build"},
     "roadmap": [
-        {"id": "1.1", "title": "Canvas shell", "priority": "P0", "description": "Drag and drop nodes."},
-        {"id": "2.1", "title": "Seed flows", "priority": "P1", "description": "Three demo flows."},
+        {"id": "1.1", "title": "Canvas shell", "priority": "P0", "description": "Drag and drop nodes.", "features": ["canvas"]},
+        {"id": "2.1", "title": "Seed flows", "priority": "P1", "description": "Three demo flows.", "features": ["canvas", "arch"]},
     ],
 }
 
@@ -52,7 +52,12 @@ def make_repo(tmp, project=None, status="uninitialized"):
     package = {"name": "template", "description": "template", "scripts": {"tailor": "node scripts/tailor.mjs"}}
     (root / "package.json").write_text(json.dumps(package, indent=2), encoding="utf-8")
 
-    blueprint = {"status": status, "project": VALID_PROJECT if project is None else project, "archetypes": {}}
+    rules = root / "docs" / "rules"
+    (rules / "features").mkdir(parents=True)
+    (rules / "README.md").write_text("# Rules" + chr(10), encoding="utf-8")
+    (rules / "features" / "canvas.md").write_text(chr(10).join(["---", "owns: []", "---", "# Canvas", ""]), encoding="utf-8")
+
+    blueprint = {"status": status, "project": VALID_PROJECT if project is None else project, "rules": {"source": ["src/**/*.ts"]}}
     (root / "project-blueprint.json").write_text(json.dumps(blueprint, indent=2), encoding="utf-8")
     return root
 

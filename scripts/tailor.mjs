@@ -39,8 +39,8 @@ function readSkillDirs(root) {
   return { active: read('skills'), archived: read('skills-archive') };
 }
 
-function sourceSpecProblem(sourceSpec, root) {
-  if (!isText(sourceSpec)) return 'must be a repo-relative path to the project spec';
+function repoFileProblem(sourceSpec, root) {
+  if (!isText(sourceSpec)) return 'must be a repo-relative path to docs/rules/README.md';
   if (path.isAbsolute(sourceSpec)) return 'must be relative to the repo root';
   const resolved = path.resolve(root, sourceSpec);
   const relative = path.relative(root, resolved);
@@ -65,8 +65,13 @@ export function validateManifest(blueprint, { root = REPO_ROOT } = {}) {
   if (!isText(project.description)) add('project.description', 'must be a non-empty string');
   if (project.archetype !== 'custom') add('project.archetype', 'must be "custom"');
 
-  const specProblem = sourceSpecProblem(project.source_spec, root);
-  if (specProblem) add('project.source_spec', specProblem);
+  const rulesProblem = repoFileProblem(project.source_rules, root);
+  if (rulesProblem) add('project.source_rules', rulesProblem);
+
+  const source = blueprint.rules?.source;
+  if (!Array.isArray(source) || source.length === 0 || !source.every(isText)) {
+    problems.push('rules.source: must be a non-empty array of globs where the code lives (for example "src/**/*.ts")');
+  }
 
   if (!isObject(project.stack)) add('project.stack', 'must be an object');
 
@@ -112,6 +117,15 @@ export function validateManifest(blueprint, { root = REPO_ROOT } = {}) {
       if (!isText(task.title)) add(field('title'), 'must be a non-empty string');
       if (!PRIORITIES.includes(task.priority)) add(field('priority'), `must be one of ${PRIORITIES.join(', ')}`);
       if (!isText(task.description)) add(field('description'), 'must be a non-empty string');
+      if (!Array.isArray(task.features) || task.features.length === 0 || !task.features.every(isText)) {
+        add(field('features'), 'must list at least one feature name (or "arch")');
+      } else {
+        for (const feature of task.features) {
+          if (feature !== 'arch' && !fs.existsSync(path.resolve(root, 'docs', 'rules', 'features', `${feature}.md`))) {
+            add(field('features'), `no feature doc docs/rules/features/${feature}.md`);
+          }
+        }
+      }
     });
   }
 
@@ -218,7 +232,7 @@ export function tailorProject({ root = REPO_ROOT, dryRun = false, force = false 
 
 ## Project Tailored
 - **Name:** ${project.name}
-- **Source Spec:** ${project.source_spec}
+- **Source Rules:** ${project.source_rules}
 - **Active Skills:** ${keep.size} (Archived: ${installed.archived.length + changes.archive.length - changes.restore.length})
 ${developerLine}`, 'utf-8');
 
@@ -229,6 +243,7 @@ ${developerLine}`, 'utf-8');
 
   // 6. Mark initialized last, so a failure above leaves the command re-runnable
   blueprint.status = 'initialized';
+  blueprint.rules = { ignore: [], tests: ['**/*.test.*', '**/*.spec.*', '**/test_*.py'], ...blueprint.rules };
   writeJson(path.resolve(root, 'project-blueprint.json'), blueprint);
 
   return { dryRun: false, changes, project };

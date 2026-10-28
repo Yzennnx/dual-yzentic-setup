@@ -12,7 +12,8 @@ const PRIORITY_SECTIONS = [
 const oneLine = (text) => String(text ?? '').replace(/\s+/g, ' ').trim();
 
 function renderTask(task) {
-  return `- [ ] **Task ${oneLine(task.id)}: ${oneLine(task.title)}**
+  const tags = (task.features ?? []).map(feature => ` [${oneLine(feature)}]`).join('');
+  return `- [ ] **Task ${oneLine(task.id)}${tags}: ${oneLine(task.title)}**
   - **Priority:** ${task.priority}
   - **Status:** Backlog
   - **Description:** ${oneLine(task.description)}
@@ -27,7 +28,7 @@ function renderSection({ priority, heading }, tasks) {
 
 /**
  * Generate fresh living roadmap.
- * tasks: [{ id, title, priority: 'P0'|'P1'|'P2', description }]
+ * tasks: [{ id, title, priority: 'P0'|'P1'|'P2', description, features? }]; features render as [tag] after the id
  */
 export function generateRoadmap({ name, desc, developer = 'the developer', preset, tasks = [] }) {
   const dateStr = new Date().toISOString().split('T')[0];

@@ -111,7 +111,7 @@ Before completing a task, opening a PR, or merging into `main`:
 - [ ] **Automated Tests Green:** `npm run verify:agent -- --tier 3` passes. Do not run the suite directly.
 - [ ] **End-to-End Green:** `npm run verify:agent -- --e2e` passes, when the project defines `verify.e2e`.
 - [ ] **Reviewed:** `npm run review` findings are fixed or answered.
-- [ ] **Acceptance Criteria Met:** Feature satisfies Given/When/Then scenarios defined in [`docs/rules/requirements.md`](../rules/requirements.md).
+- [ ] **Acceptance Criteria Met:** Feature satisfies the rules in its feature doc under [`docs/rules/features/`](../rules/README.md) and every invariant in `docs/rules/invariants.md`.
 - [ ] **The 4 UI States Handled:** Loading (skeletons), Empty, Error, and Success states verified.
 - [ ] **Accessibility & Web Vitals:** Keyboard operable (WCAG 2.1 AA) with zero layout shift regressions (CLS < 0.1).
 - [ ] **Zero Secret Leaks:** Zero credentials, tokens, or `.env` traces in commits or logs.

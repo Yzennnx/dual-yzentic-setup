@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { checkAll as checkMockups } from './mockups-check.mjs';
 import { checkRules } from './rules-check.mjs';
+import { globalSkillsLine } from './global-skills.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -132,6 +133,7 @@ export function buildContext(root = REPO_ROOT) {
     'Project session context (injected by .claude/settings.json):',
     ...mockupLines(root),
     ...rulesLine(root),
+    ...globalSkillsLine(root),
     blueprintLine(root),
     modeLine(root),
     'Process by tier (the surface sets the tier, not the size): Tier 1 = fast-track only, no documents or agents. '

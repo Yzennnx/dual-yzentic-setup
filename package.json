@@ -8,6 +8,7 @@
     "sync:status": "node scripts/baton.mjs status",
     "sync:reset": "node scripts/baton.mjs reset",
     "skill:list": "node scripts/skills-manager.mjs list",
+    "skills:global": "node scripts/global-skills.mjs",
     "skill:enable": "node scripts/skills-manager.mjs enable",
     "skill:disable": "node scripts/skills-manager.mjs disable",
     "init:project": "node scripts/init-project.mjs",

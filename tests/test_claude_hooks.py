@@ -104,7 +104,7 @@ class TestGuardCommands(unittest.TestCase):
 
 
 class TestSessionContext(unittest.TestCase):
-    def fixture(self, session=None, blueprint=None):
+    def fixture(self, session=None, blueprint=None, global_skills=None):
         tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.addCleanup(tmp.cleanup)
         root = Path(tmp.name)
@@ -113,6 +113,8 @@ class TestSessionContext(unittest.TestCase):
             (root / ".agents" / "sync" / "session.md").write_text(session, encoding="utf-8")
         if blueprint is not None:
             (root / "project-blueprint.json").write_text(blueprint, encoding="utf-8")
+        if global_skills is not None:
+            (root / "global-skills.json").write_text(global_skills, encoding="utf-8")
         return root
 
     def context(self, root):
@@ -148,6 +150,24 @@ class TestSessionContext(unittest.TestCase):
     def test_no_orca_repo_id_means_no_ready_to_merge_list(self):
         text = self.context(self.fixture(session="handoff", blueprint=json.dumps({"status": "initialized", "workflow": {"orca_repo_id": ""}})))
         self.assertNotIn("Ready to merge:", text)
+
+    def test_reports_missing_global_skills_when_configured(self):
+        root = self.fixture(
+            session="handoff\n",
+            blueprint=json.dumps({"status": "initialized"}),
+            global_skills=json.dumps({"skills": ["_missing_fixture_skill"]}),
+        )
+        text = self.context(root)
+        self.assertIn("Global skills missing: _missing_fixture_skill (run npm run skills:global -- --install)", text)
+
+    def test_omits_global_skills_line_when_all_installed(self):
+        root = self.fixture(
+            session="handoff\n",
+            blueprint=json.dumps({"status": "initialized"}),
+            global_skills=json.dumps({"skills": []}),
+        )
+        text = self.context(root)
+        self.assertNotIn("Global skills missing:", text)
 
 
 class TestReadyToMerge(unittest.TestCase):

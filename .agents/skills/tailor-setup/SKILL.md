@@ -84,7 +84,7 @@ Extend the existing `project` block and set the top-level `rules.source`.
 | `roadmap` | yes | At least one task. `id` unique; `priority` is `P0`, `P1`, or `P2`; `features` lists the feature names it belongs to (each needs `docs/rules/features/<name>.md`) or `arch`. They become `[feature]` tags on the PLAN line. |
 | `rules.source` (top level) | yes | Globs of where the project's code lives. `npm run tailor` keeps it and fills `rules.ignore` and `rules.tests` with defaults; `npm run rules:check` flags a new source file no doc owns. |
 
-**Always kept, listed or not:** `tailor-setup`, `fast-track`, `caveman`, `ponytail`.
+**Always kept, listed or not:** `tailor-setup`, `fast-track`, `wayfinder`. General skills (`caveman`, `ponytail`, `impeccable`, …) are installed globally, not in the repo: see `global-skills.json`. Only list skills in `project.skills` that live in `.agents/skills/` or `.agents/skills-archive/`; to add one from `~/skill-library`, copy it into `.agents/skills/` first.
 
 ---
 

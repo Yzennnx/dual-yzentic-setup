@@ -6,7 +6,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO_ROOT / "scripts"
 
-ACTIVE_SKILLS = ["tailor-setup", "fast-track", "caveman", "ponytail", "alpha", "beta"]
+ACTIVE_SKILLS = ["tailor-setup", "fast-track", "wayfinder", "alpha", "beta"]
 ARCHIVED_SKILLS = ["gamma"]
 
 VALID_PROJECT = {

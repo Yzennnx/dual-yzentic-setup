@@ -39,7 +39,7 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
 
 ## 3. Communication & Safety Guardrails
 - **Destructive Actions:** Stop and request explicit user confirmation before deleting files, dropping tables, or force-pushing.
-- **Zero Secret Exposure:** Never display, print, or leak contents of `.env` files or API credentials into logs or chat. Use [`varlock`](../../.agents/skills/varlock/SKILL.md).
+- **Zero Secret Exposure:** Never display, print, or leak contents of `.env` files or API credentials into logs or chat. Use the `owasp-security` skill to review anything that handles secrets.
 - **Conciseness:** Keep responses concise, evidence-driven, and focused on working deliverables.
 
 ---
@@ -60,24 +60,35 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
 
 ---
 
-### Domain Skills ([`.agents/skills/`](../../.agents/skills/))
+### Workflow Skills ([`.agents/skills/`](../../.agents/skills/))
 
-| Scenario / Task | Recommended Skill | Purpose |
+These ship with the repo because the scripts and agent docs depend on them.
+
+| Scenario / Task | Skill | Purpose |
 | :--- | :--- | :--- |
-| **Token defense on Claude Pro** | [`caveman`](../../.agents/skills/caveman/SKILL.md) | Strips conversational filler, saves ~70% output tokens |
-| **Minimalist coding & anti-over-engineering** | [`ponytail`](../../.agents/skills/ponytail/SKILL.md) | "Lazy senior developer" mode: smallest workable diff, no bloated libraries |
-| **Design intelligence (React, Tailwind, Shadcn)** | [`ui-ux-pro-max`](../../.agents/skills/ui-ux-pro-max/SKILL.md) | Searchable design tokens, color palettes, typography, and UX patterns |
-| **Award-winning UI polish & accessibility** | [`impeccable`](../../.agents/skills/impeccable/SKILL.md) | Precision commands: `/impeccable polish`, `bolder`, `quieter`, `audit` |
-| **System architecture & sequence diagrams** | [`archify`](../../.agents/skills/archify/SKILL.md) | Generates interactive architecture and sequence diagrams |
-| **Realistic mock & seed data for demos** | [`demo-seed-data`](../../.agents/skills/demo-seed-data/SKILL.md) | Populates dashboards with avatars, realistic names, dynamic metrics |
 | **Kickoff of an uninitialized project: surfacing and mapping open decisions** | [`wayfinder`](../../.agents/skills/wayfinder/SKILL.md) | Tags open decisions, then hands off to brainstorming or charts a ticket map in `docs/wayfinder/` |
 | **Tailoring the repo to the design in docs/rules at kickoff** | [`tailor-setup`](../../.agents/skills/tailor-setup/SKILL.md) | Derives skills, roadmap, rules, scaffold, and verify commands from the project design in `docs/rules/` |
-| **Trying to break an area (QA attacks)** | [`qa-break`](../../.agents/skills/qa-break/SKILL.md) | Attack catalogue, findings in `docs/qa/`, `*.qa.e2e.ts` tests via `npm run e2e:qa` |
-| **Switching between classic and agy-build workflow** | [`workflow`](../../.agents/skills/workflow/SKILL.md) | `/workflow agy-build` or `/workflow classic`: sets `workflow.mode` in the blueprint |
 | **Micro-tasks, cosmetic CSS & quick fixes** | [`fast-track`](../../.agents/skills/fast-track/SKILL.md) | Express-lane protocol for token-efficient edits without test ceremony |
-| **Web application browser testing** | [`webapp-testing`](../../.agents/skills/webapp-testing/SKILL.md) | Headless Playwright automation and DOM verification |
-| **Managing API keys & secrets safely** | [`varlock`](../../.agents/skills/varlock/SKILL.md) | Zero-leak secret management |
-| **Security audit, auth, crypto** | [`owasp-security`](../../.agents/skills/owasp-security/SKILL.md) | Audit against OWASP Top 10 |
+| **Switching between classic and agy-build workflow** | [`workflow`](../../.agents/skills/workflow/SKILL.md) | `/workflow agy-build` or `/workflow classic`: sets `workflow.mode` in the blueprint |
+| **Trying to break an area (QA attacks)** | [`qa-break`](../../.agents/skills/qa-break/SKILL.md) | Attack catalogue, findings in `docs/qa/`, `*.qa.e2e.ts` tests via `npm run e2e:qa` |
+| **Realistic mock & seed data for demos** | [`demo-seed-data`](../../.agents/skills/demo-seed-data/SKILL.md) | Populates dashboards with avatars, realistic names, dynamic metrics |
+| **Delegating between agents or Orca workers** | [`multi-agent-handoff`](../../.agents/skills/multi-agent-handoff/SKILL.md) | Hands task state between subagents and worktrees |
+
+### Global Skills (installed on the machine, listed in [`global-skills.json`](../../global-skills.json))
+
+Installed once in `~/.agents/skills` and seen by both agents (`~/.claude/skills` and `~/.gemini/config/skills` link to it). They load automatically when a request matches their description; nothing links to them by path. `npm run skills:global` reports missing ones, `-- --install` copies them from `~/skill-library`.
+
+| Skill | Purpose |
+| :--- | :--- |
+| `caveman` | Terse replies, saves output tokens |
+| `ponytail` | Smallest workable change, no bloated libraries |
+| `impeccable` | UI design, critique and polish (`/impeccable polish`) |
+| `owasp-security` | Security review against OWASP Top 10 |
+| `webapp-testing` | Headless Playwright checks of a running app |
+
+### Skill Library (`~/skill-library`)
+
+Every other skill (archify, slides, varlock, ui-ux-pro-max, …) lives in `~/skill-library`, installed nowhere. Copy one into `.agents/skills/` when a project needs it.
 
 ---
 

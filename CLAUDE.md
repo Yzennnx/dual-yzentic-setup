@@ -42,7 +42,7 @@ You own application architecture, feature planning, and source code in `src/`.
 Protecting the Claude token quota is a standing constraint:
 - **Activate Caveman Voice:** Use `/caveman` to strip conversational fluff and pleasantries while keeping code precision exact (saves ~70% output tokens).
 - **Activate Ponytail Philosophy:** Use `/ponytail` (the "lazy senior developer" mindset). Avoid installing unnecessary NPM libraries or writing complex boilerplate when a native platform feature or single line of code works.
-- **Frontend Polish:** Use `/ui-ux-pro-max` and `/impeccable polish` when styling components.
+- **Frontend Polish:** Use `/impeccable polish` when styling components.
 - **Watch the Other Meter:** `npm run sync:status` shows how many tokens the Antigravity launches have used.
 
 ---

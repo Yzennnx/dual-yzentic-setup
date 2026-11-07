@@ -34,7 +34,7 @@ class TestE2EProjectBlueprint(unittest.TestCase):
             "source_rules": "docs/rules/README.md",
             "stack": {"runtime": "Node"},
             "developer": "Alice",
-            "skills": ["ui-ux-pro-max"],
+            "skills": ["qa-break"],
             "verify": {"test": "npm test"},
             "roadmap": [{"id": "1.1", "title": "Lists", "priority": "P0", "description": "Lists page.", "features": ["lists"]}],
         }
@@ -53,14 +53,14 @@ class TestE2EProjectBlueprint(unittest.TestCase):
         res_list = self.node("skills-manager.mjs", "list", "--json")
         self.assertEqual(res_list.returncode, 0, res_list.stderr)
         skills_data = json.loads(res_list.stdout)
-        self.assertIn("ui-ux-pro-max", skills_data["active"])
-        self.assertIn("caveman", skills_data["active"])
-        self.assertIn("ponytail", skills_data["active"])
-        self.assertIn("slides", skills_data["archived"])
-        res_enable = self.node("skills-manager.mjs", "enable", "slides")
+        self.assertIn("qa-break", skills_data["active"])
+        self.assertIn("fast-track", skills_data["active"])
+        self.assertIn("wayfinder", skills_data["active"])
+        self.assertIn("demo-seed-data", skills_data["archived"])
+        res_enable = self.node("skills-manager.mjs", "enable", "demo-seed-data")
         self.assertEqual(res_enable.returncode, 0, res_enable.stderr)
-        self.assertTrue((self.skills_dir / "slides").exists())
-        self.assertFalse((self.archive_dir / "slides").exists())
+        self.assertTrue((self.skills_dir / "demo-seed-data").exists())
+        self.assertFalse((self.archive_dir / "demo-seed-data").exists())
 
         # 4. Baton status works cleanly in initialized state
         res_baton = self.node("baton.mjs", "status")

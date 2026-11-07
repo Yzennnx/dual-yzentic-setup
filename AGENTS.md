@@ -68,7 +68,7 @@ Size does not set the tier; the surface does. The tier the baton detects only ch
 5. **Session length:**
    - Start from [`.agents/sync/session.md`](.agents/sync/session.md). After each task, note it on its `docs/PLAN.md` line. Chain further Tier 1 or Tier 2 tasks in the same app and area, up to 3 per session and before any auto-compaction; a Tier 3 task gets a fresh session. When the session ends, overwrite `session.md` with a summary of at most 20 lines (done, branch and commit, decisions, next step, hand tests owed, files to open) so the next session starts small.
 6. **Zero secret exposure:**
-   - Never print raw `.env` contents, API keys, credentials, or tokens. Use [`varlock`](.agents/skills/varlock/SKILL.md) and review against [`owasp-security`](.agents/skills/owasp-security/SKILL.md).
+   - Never print raw `.env` contents, API keys, credentials, or tokens. Review against the global `owasp-security` skill.
 
 ---
 
@@ -78,5 +78,5 @@ Size does not set the tier; the surface does. The tier the baton detects only ch
 - [`.agents/sync/`](.agents/sync/): **Dual-Agent Sync Bus**. `session.md` is the committed cross-session handoff. `handoff.json`, `handoff.md`, `scout.md`, `review.md`, and `last-failure.log` are local state written by the scripts and are not committed.
 - [`docs/ai/agent-handbook.md`](docs/ai/agent-handbook.md): Skills catalog and routing index.
 - [`docs/ai/workflows.md`](docs/ai/workflows.md): The scout, build, verify, and review flow.
-- [`.agents/skills/`](.agents/skills/): On-demand domain skills.
+- [`.agents/skills/`](.agents/skills/): Workflow skills. General skills are installed globally (see [`global-skills.json`](global-skills.json)).
 - [`docs/rules/`](docs/rules/README.md): The project's design, split by feature: `invariants.md`, `architecture.md`, and `features/<feature>.md` docs that own code paths. Read `invariants.md` plus the one feature doc your task names. `npm run rules:check` keeps docs and code in step.

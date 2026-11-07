@@ -84,7 +84,7 @@ Major architectural and multi-step tasks progress through this pipeline:
 Web applications in this repository adhere to a three-tier testing pyramid:
 - **Unit & Custom Hook Tests (Vitest):** Millisecond-fast execution of pure business logic, calculations, and custom React hooks.
 - **Component & Interaction Tests (React Testing Library):** User-centric verification of UI rendering, form events, and accessibility attributes without mocking internal state.
-- **End-to-End User Journeys (Playwright via [`webapp-testing`](../../.agents/skills/webapp-testing/SKILL.md)):** Headless browser automation verifying critical user paths (auth, multi-step checkout, forms, and all 4 UI states).
+- **End-to-End User Journeys (Playwright via the global `webapp-testing` skill):** Headless browser automation verifying critical user paths (auth, multi-step checkout, forms, and all 4 UI states).
 
 ---
 
@@ -103,7 +103,7 @@ Enforced via `superpowers:systematic-debugging`:
   ```bash
   git checkout -b feature/<descriptive-name>
   ```
-- **Isolated Worktrees:** For parallel agent work or large refactors, use `superpowers:using-git-worktrees` or [`orca-cli`](../../.agents/skills/orca-cli/SKILL.md).
+- **Isolated Worktrees:** For parallel agent work or large refactors, use `superpowers:using-git-worktrees` or the global `orca-cli` skill.
 - **Conventional Commits:** Format commit messages with clear semantic types (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`).
 
 ### Pull Request & Pre-Merge Checklist

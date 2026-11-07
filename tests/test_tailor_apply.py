@@ -37,7 +37,7 @@ class TestTailorApply(unittest.TestCase):
 
         self.assertEqual(
             skill_dirs(root) - {"_staging"},
-            {"alpha", "gamma", "tailor-setup", "fast-track", "caveman", "ponytail"},
+            {"alpha", "gamma", "tailor-setup", "fast-track", "wayfinder"},
         )
         self.assertEqual(skill_dirs(root, "skills-archive"), {"beta"})
 
@@ -131,7 +131,7 @@ class TestTailorApply(unittest.TestCase):
 
     def test_duplicate_skills_apply_once(self):
         project = copy.deepcopy(VALID_PROJECT)
-        project["skills"] = ["alpha", "alpha", "caveman"]
+        project["skills"] = ["alpha", "alpha", "wayfinder"]
         root = self.repo(project=project)
 
         res = tailor(root)

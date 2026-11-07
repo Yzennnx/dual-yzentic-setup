@@ -122,7 +122,7 @@ class TestTailorValidation(unittest.TestCase):
 
     def test_duplicate_and_always_kept_skills_are_valid(self):
         project = copy.deepcopy(VALID_PROJECT)
-        project["skills"] = ["alpha", "alpha", "caveman"]
+        project["skills"] = ["alpha", "alpha", "wayfinder"]
         self.assertEqual(self.problems(project), [])
 
 

@@ -9,7 +9,7 @@ class TestSkillsStructure(unittest.TestCase):
         self.archive_dir = self.root / ".agents" / "skills-archive"
 
     def test_required_skills_exist(self):
-        required_skills = ["varlock", "owasp-security", "multi-agent-handoff", "webapp-testing", "oiloil-ui-ux-guide", "fast-track", "skill-seeker"]
+        required_skills = ["fast-track", "tailor-setup", "wayfinder", "workflow", "multi-agent-handoff", "qa-break", "demo-seed-data"]
         for skill_name in required_skills:
             skill_file = self.skills_dir / skill_name / "SKILL.md"
             if not skill_file.exists() and self.archive_dir.exists():
@@ -28,7 +28,7 @@ class TestSkillsStructure(unittest.TestCase):
         active_dirs = [p for p in self.skills_dir.iterdir() if p.is_dir() and not p.name.startswith("_")]
         archived_dirs = [p for p in self.archive_dir.iterdir() if p.is_dir() and not p.name.startswith("_")] if self.archive_dir.exists() else []
         all_dirs = active_dirs + archived_dirs
-        self.assertGreaterEqual(len(all_dirs), 21, "Should have at least 21 curated domain skills total")
+        self.assertGreaterEqual(len(all_dirs), 7, "Should have the 7 workflow skills")
         for skill_dir in all_dirs:
             skill_file = skill_dir / "SKILL.md"
             self.assertTrue(skill_file.exists(), f"Each skill folder must have SKILL.md: {skill_dir.name}")

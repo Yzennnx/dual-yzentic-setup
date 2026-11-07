@@ -1,8 +1,0 @@
-# Claude Project Instructions
-
-Please load and follow:
-
-- `@AGENTS.md`
-- `@skills/oiloil-ui-ux-guide/SKILL.md`
-
-If there is a conflict, prioritize `AGENTS.md` for repository-level conventions and `SKILL.md` for skill behavior.

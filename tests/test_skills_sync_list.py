@@ -20,16 +20,16 @@ class TestSkillsSyncList(unittest.TestCase):
         return run_node(code)
 
     def test_archives_unlisted_and_restores_listed(self):
-        res = self.sync(["alpha", "gamma", "caveman"])
+        res = self.sync(["alpha", "gamma", "wayfinder"])
         self.assertEqual(res.returncode, 0, res.stderr)
         result = json.loads(res.stdout)
 
-        self.assertEqual(skill_dirs(self.root) - {"_staging"}, {"alpha", "gamma", "caveman"})
-        self.assertEqual(skill_dirs(self.root, "skills-archive"), {"beta", "tailor-setup", "fast-track", "ponytail"})
+        self.assertEqual(skill_dirs(self.root) - {"_staging"}, {"alpha", "gamma", "wayfinder"})
+        self.assertEqual(skill_dirs(self.root, "skills-archive"), {"beta", "tailor-setup", "fast-track"})
         self.assertEqual(result["enabled"], ["gamma"])
         self.assertIn("beta", result["disabled"])
         self.assertEqual(result["active_count"], 3)
-        self.assertEqual(result["archived_count"], 4)
+        self.assertEqual(result["archived_count"], 3)
 
     def test_unknown_name_moves_nothing(self):
         active_before = skill_dirs(self.root)

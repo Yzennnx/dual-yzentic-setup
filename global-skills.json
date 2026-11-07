@@ -1,0 +1,16 @@
+{
+  "library": "~/skill-library",
+  "skills": [
+    "caveman",
+    "ponytail",
+    "impeccable",
+    "owasp-security",
+    "webapp-testing",
+    "find-skills",
+    "openai-docs",
+    "orca-cli",
+    "orchestration",
+    "skill-creator",
+    "tool-design"
+  ]
+}

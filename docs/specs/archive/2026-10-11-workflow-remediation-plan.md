@@ -64,7 +64,7 @@ New constraints from the developer: the setup is **not for hackathons** and is f
 
 **Decisions:**
 - Two machine prefixes exist: `file:///mnt/LubaDub/Projects/Web/dual-yzentic-setup/dual-yzentic-setup` and `file:///C:/Users/Admin/Yzen/Yzentic-setup`. Each link `](<prefix><path>)` becomes a POSIX relative path from the containing file's directory to `<path>`. A bare prefix (repo root) becomes the relative path to the root. Keep a trailing `/` when the original had one. Do the conversion with a throwaway script; do not commit the script.
-- `scripts/roadmap.mjs`: the Sync Protocol link becomes `[\`scripts/baton.mjs\`](../scripts/baton.mjs)`. Remove the `batonPath` parameter and stop passing it from `scripts/init-project.mjs` and `scripts/tailor.mjs`.
+- `scripts/roadmap.mjs`: the Sync Protocol link becomes `[\`scripts/baton.mjs\`](../../scripts/baton.mjs)`. Remove the `batonPath` parameter and stop passing it from `scripts/init-project.mjs` and `scripts/tailor.mjs`.
 - `AGENTS.md` tenet 2 becomes exactly these three lines (` / ` marks a line break):
   `2. **Navigable file and symbol references:**` / `   - In chat replies, format file paths and code symbols as clickable Markdown links using the \`file://\` scheme with the absolute path on the current machine.` / `   - In committed files, use relative Markdown links. Never commit an absolute machine path.`
 - `tailor-setup/SKILL.md` section 9, "Clickable links" bullet becomes: `- **Relative links.** In files you write, link with relative Markdown paths, never absolute machine paths.`

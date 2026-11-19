@@ -27,7 +27,7 @@ Requirement / Idea
 2. Human Review Gate (One Approval, in chat)
        │
        ▼
-3. The approved design saved as the plan (`docs/specs/YYYY-MM-DD-<name>-plan.md`)
+3. The approved design saved as the plan (`docs/specs/active/YYYY-MM-DD-<name>-plan.md`)
        │
        ▼
 4. Implementation, Tests & Verification Under the Selected Preset
@@ -42,7 +42,7 @@ Requirement / Idea
 - `.agents/skills/_staging/`: Isolated staging gate for unverified scrape artifacts.
 - `docs/ai/`: Agent operational guides, workflows, and architecture.
 - `docs/rules/`: The project's design: invariants, architecture and one doc per feature, each owning its code paths (`npm run rules:check`).
-- `docs/specs/`: Approved technical specs and plans.
+- `docs/specs/`: Active and archived [specs](../specs/README.md).
 - `tests/`: Automated unit and integration test suites. Script tests run against temp fixture repos, never this one.
 - `scripts/`: The baton, the Antigravity launcher, and the scout, review, tailor, and init commands.
 - `.agents/sync/`: `session.md` (committed handoff), `resume.md` (local task handoff), and local baton and Gatekeeper state.

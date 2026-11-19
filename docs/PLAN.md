@@ -16,12 +16,13 @@ Provide a single-developer workflow in which Claude Code plans and writes source
 
 ## Rules for Adding Features
 
-1. **Log it first:** Add every new idea below with a Priority and the status `[ ] Backlog` before any code is written.
+1. **Log it first:** Add every new idea below with a Priority and the status `[ ] Backlog` before any code is written. Link tasks created from an approved spec to that spec.
 2. **Priorities:**
    - **`P0` (Must-Have):** Required for the core user journey to work.
    - **`P1` (Should-Have):** Improves the core journey: polish, seed data, secondary flows.
    - **`P2` (Later):** Parked until P0 and P1 are done.
 3. **One task at a time:** Finish, verify with `npm run verify:agent`, and commit a task before starting the next.
+4. **Archive after completion:** When the final linked task closes, move the spec and update every roadmap link in the same commit. Follow the [spec lifecycle](specs/README.md).
 
 ---
 
@@ -41,12 +42,12 @@ Active milestone: **Workflow setup complete; waiting for a project to start**
 - [x] **Task 0.2: Spec-Driven Setup Tailoring (`tailor-setup` skill)**
   - **Priority:** P0
   - **Status:** Done
-  - **Description:** Skill plus `npm run tailor` that tailors skills, roadmap, rules, scaffold, and baton commands from a brainstormed spec. Design: [`2026-10-11-tailor-setup-design.md`](specs/2026-10-11-tailor-setup-design.md).
+  - **Description:** Skill plus `npm run tailor` that tailors skills, roadmap, rules, scaffold, and baton commands from a brainstormed spec. Design: [`2026-10-11-tailor-setup-design.md`](specs/archive/2026-10-11-tailor-setup-design.md).
 
 - [x] **Task 0.3: Antigravity Delegation (Scout, Gatekeeper, Review)**
   - **Priority:** P0
   - **Status:** Done
-  - **Description:** Scripts launch Antigravity headlessly to scout the codebase, write and diagnose tests on `npm run verify:agent`, and review branches. Design: [`2026-10-11-antigravity-delegation-design.md`](specs/2026-10-11-antigravity-delegation-design.md).
+  - **Description:** Scripts launch Antigravity headlessly to scout the codebase, write and diagnose tests on `npm run verify:agent`, and review branches. Design: [`2026-10-11-antigravity-delegation-design.md`](specs/archive/2026-10-11-antigravity-delegation-design.md).
 
 - [x] **Task 0.4: Token Budget Rules & Sonnet Builder Agent**
   - **Priority:** P0
@@ -56,17 +57,22 @@ Active milestone: **Workflow setup complete; waiting for a project to start**
 - [x] **Task 0.5: Workflow Remediation**
   - **Priority:** P0
   - **Status:** Done
-  - **Description:** Fixes from the 2026-10-11 audit: a gate that blocks, tests isolated from the real repo, portable links, one consistent rule set, enforcement hooks, single-developer framing. Plan: [`2026-10-11-workflow-remediation-plan.md`](specs/2026-10-11-workflow-remediation-plan.md).
+  - **Description:** Fixes from the 2026-10-11 audit: a gate that blocks, tests isolated from the real repo, portable links, one consistent rule set, enforcement hooks, single-developer framing. Plan: [`2026-10-11-workflow-remediation-plan.md`](specs/archive/2026-10-11-workflow-remediation-plan.md).
 
 - [x] **Task 0.6: Faster Verification**
   - **Priority:** P0
   - **Status:** Done
-  - **Description:** Opt-in end-to-end runs, no repeated run on commit, diagnosis only when needed, a fast model for scout and diagnosis, and lighter process rules. Plan: [`2026-10-12-faster-verification-plan.md`](specs/2026-10-12-faster-verification-plan.md).
+  - **Description:** Opt-in end-to-end runs, no repeated run on commit, diagnosis only when needed, a fast model for scout and diagnosis, and lighter process rules. Plan: [`2026-10-12-faster-verification-plan.md`](specs/archive/2026-10-12-faster-verification-plan.md).
 
 - [x] **Task 0.7: Switchable Agent Workflows**
   - **Priority:** P0
   - **Status:** Done
-  - **Description:** Add checkout-local solo and paired presets, shared role resolution, and handoff guidance. Plan: [`2026-11-19-workflow-switcher-plan.md`](specs/2026-11-19-workflow-switcher-plan.md).
+  - **Description:** Add checkout-local solo and paired presets, shared role resolution, and handoff guidance. Plan: [`2026-11-19-workflow-switcher-plan.md`](specs/archive/2026-11-19-workflow-switcher-plan.md).
+
+- [ ] **Task 0.8: Active and Archived Specs**
+  - **Priority:** P0
+  - **Status:** In progress
+  - **Description:** Link approved feature tasks to specs, organize active and archived documents, and select the matching spec for review. Spec: [Active and archived specs](specs/active/2026-11-19-spec-lifecycle-plan.md).
 
 - [ ] **Task 1.1: Core Application Shell & Navigation**
   - **Priority:** P0

@@ -2,7 +2,7 @@
 
 - **Date:** 2026-10-08
 - **Status:** Draft / Pending Review
-- **Repository:** [`dual-yzentic-setup`](../../)
+- **Repository:** [`dual-yzentic-setup`](../../../)
 - **Target Context:** Fresh Clone Onboarding, Token Optimization & Domain Rules Customization
 
 ---
@@ -13,20 +13,20 @@ This specification defines the architecture, file formats, and execution logic f
 
 ### Problem Statement
 1. **Agent Context Clutter:** The repository houses 34+ skills across UI/UX, pitch design, diagrams, security, email templates, and MCP authoring. Loading all 34 skills into an agent's context window burns unnecessary input tokens on every turn.
-2. **Fresh Clone Setup Friction:** When developers clone this template repository for a new project or hackathon, placeholder roadmap items (`Task 0.1`, `Task 1.1`), outdated commit state, and generic rules in [`docs/rules/`](../rules/README.md) remain until manually cleaned up.
+2. **Fresh Clone Setup Friction:** When developers clone this template repository for a new project or hackathon, placeholder roadmap items (`Task 0.1`, `Task 1.1`), outdated commit state, and generic rules in [`docs/rules/`](../../rules/README.md) remain until manually cleaned up.
 3. **Missing Proactive Onboarding:** Currently, neither Claude Code nor Antigravity checks if the project has just been cloned, leaving teams without a structured initialization flow.
 
 ### Proposed Solution
 - **Declarative Blueprint (`project-blueprint.json`):** A root configuration file tracking initialization status, project metadata, team members (`Dev 1`, `Dev 2`), selected tech stack, and pre-configured archetype presets.
-- **Reversible Skill Soft-Deletion:** Moves non-essential skills to [`.agents/skills-archive/`](../../.agents/skills-archive/), keeping only the 8–12 skills required for the chosen archetype, with zero-friction restoration via `npm run skill:enable <skill>`.
-- **Dynamic Rules & Roadmap Customization:** Rewrites [`docs/rules/`](../rules/README.md) to reflect the project's actual frontend/backend stack and generates a fresh, clean-slate [`docs/PLAN.md`](../PLAN.md).
-- **Dual Interface:** An interactive Node CLI wizard (`npm run init:project`) combined with an Agent First-Turn Gate in [`AGENTS.md`](../../AGENTS.md) that prompts the developer if the repo is uninitialized.
+- **Reversible Skill Soft-Deletion:** Moves non-essential skills to [`.agents/skills-archive/`](../../../.agents/skills-archive/), keeping only the 8–12 skills required for the chosen archetype, with zero-friction restoration via `npm run skill:enable <skill>`.
+- **Dynamic Rules & Roadmap Customization:** Rewrites [`docs/rules/`](../../rules/README.md) to reflect the project's actual frontend/backend stack and generates a fresh, clean-slate [`docs/PLAN.md`](../../PLAN.md).
+- **Dual Interface:** An interactive Node CLI wizard (`npm run init:project`) combined with an Agent First-Turn Gate in [`AGENTS.md`](../../../AGENTS.md) that prompts the developer if the repo is uninitialized.
 
 ---
 
 ## 2. Blueprint Schema & Archetypes (`project-blueprint.json`)
 
-The file [`project-blueprint.json`](../../project-blueprint.json) lives at the workspace root:
+The file [`project-blueprint.json`](../../../project-blueprint.json) lives at the workspace root:
 
 ```json
 {
@@ -93,8 +93,8 @@ The file [`project-blueprint.json`](../../project-blueprint.json) lives at the w
 To keep agent context lean without permanently losing any installed capabilities:
 
 ### Directory Conventions
-- **Active Skills:** [`.agents/skills/<skill_name>/`](../../.agents/skills/) — Agents scan only this directory.
-- **Archived Skills:** [`.agents/skills-archive/<skill_name>/`](../../.agents/skills-archive/) — Preserved offline on disk, omitted from agent discovery.
+- **Active Skills:** [`.agents/skills/<skill_name>/`](../../../.agents/skills/) — Agents scan only this directory.
+- **Archived Skills:** [`.agents/skills-archive/<skill_name>/`](../../../.agents/skills-archive/) — Preserved offline on disk, omitted from agent discovery.
 
 ### CLI Commands (`package.json`)
 1. `npm run skill:enable <skill-name>`: Moves `.agents/skills-archive/<name>` $\rightarrow$ `.agents/skills/<name>`.
@@ -109,15 +109,15 @@ To keep agent context lean without permanently losing any installed capabilities
 When tailoring executes (either via CLI or agent trigger), the following transformations occur deterministically:
 
 ### A. Skill Soft-Delete
-- Reads `keep_skills` for the chosen archetype from [`project-blueprint.json`](../../project-blueprint.json).
-- Moves every folder in [`.agents/skills/`](../../.agents/skills/) not present in `keep_skills` to [`.agents/skills-archive/`](../../.agents/skills-archive/).
+- Reads `keep_skills` for the chosen archetype from [`project-blueprint.json`](../../../project-blueprint.json).
+- Moves every folder in [`.agents/skills/`](../../../.agents/skills/) not present in `keep_skills` to [`.agents/skills-archive/`](../../../.agents/skills-archive/).
 - Leaves active skills untouched.
 
 ### B. Rules Configuration
-- Updates [`docs/rules/frontend.md`](../rules/frontend.md) and [`docs/rules/backend.md`](../rules/backend.md) with specific framework, ORM, and styling standards matching the chosen stack.
+- Updates [`docs/rules/frontend.md`](../../rules/frontend.md) and [`docs/rules/backend.md`](../../rules/backend.md) with specific framework, ORM, and styling standards matching the chosen stack.
 
 ### C. Roadmap Generation
-- Generates a fresh [`docs/PLAN.md`](../PLAN.md):
+- Generates a fresh [`docs/PLAN.md`](../../PLAN.md):
   - Injects project name, 1-line mission pitch, and sprint deadline.
   - Replaces old setup boilerplate with standard starter milestones:
     - `Task 1.1: Core Application Shell & Navigation` (Assigned to Dev 1)
@@ -125,7 +125,7 @@ When tailoring executes (either via CLI or agent trigger), the following transfo
     - `Task 1.3: Hero Interactive Value Loop` (Assigned to Dev 1)
 
 ### D. Sync Bus Reset
-- Resets [`.agents/sync/handoff.json`](../../.agents/sync/handoff.json):
+- Resets [`.agents/sync/handoff.json`](../../../.agents/sync/handoff.json):
   ```json
   {
     "version": "1.0",
@@ -138,10 +138,10 @@ When tailoring executes (either via CLI or agent trigger), the following transfo
     "files_modified": []
   }
   ```
-- Resets [`.agents/sync/handoff.md`](../../.agents/sync/handoff.md) to clean ready state.
+- Resets [`.agents/sync/handoff.md`](../../../.agents/sync/handoff.md) to clean ready state.
 
 ### E. Package.json Metadata
-- Updates `name` and `description` in [`package.json`](../../package.json).
+- Updates `name` and `description` in [`package.json`](../../../package.json).
 
 ---
 
@@ -159,8 +159,8 @@ npm run init:project
   ```
 
 ### 2. Agent First-Turn Gate
-- Governed in [`AGENTS.md`](../../AGENTS.md) and [`docs/ai/agent-handbook.md`](../ai/agent-handbook.md):
-- On session start, both Claude and Antigravity inspect [`project-blueprint.json`](../../project-blueprint.json).
+- Governed in [`AGENTS.md`](../../../AGENTS.md) and [`docs/ai/agent-handbook.md`](../../ai/agent-handbook.md):
+- On session start, both Claude and Antigravity inspect [`project-blueprint.json`](../../../project-blueprint.json).
 - If `"status": "uninitialized"`:
   - Agent halts feature coding and prompts:
     > *"Welcome to your project! This repository has just been cloned and is currently uninitialized. Let's set up your project name, tech stack, and developer roles so we can customize your tools and roadmap."*

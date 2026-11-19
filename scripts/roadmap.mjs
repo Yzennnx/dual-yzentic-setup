@@ -13,11 +13,13 @@ const oneLine = (text) => String(text ?? '').replace(/\s+/g, ' ').trim();
 
 function renderTask(task) {
   const tags = (task.features ?? []).map(feature => ` [${oneLine(feature)}]`).join('');
+  const spec = oneLine(task.spec);
+  const specLine = spec ? `  - **Spec:** [Approved spec](${spec})\n` : '';
   return `- [ ] **Task ${oneLine(task.id)}${tags}: ${oneLine(task.title)}**
   - **Priority:** ${task.priority}
   - **Status:** Backlog
   - **Description:** ${oneLine(task.description)}
-`;
+${specLine}`;
 }
 
 function renderSection({ priority, heading }, tasks) {
@@ -28,7 +30,7 @@ function renderSection({ priority, heading }, tasks) {
 
 /**
  * Generate fresh living roadmap.
- * tasks: [{ id, title, priority: 'P0'|'P1'|'P2', description, features? }]; features render as [tag] after the id
+ * Each task can supply feature tags and a spec path relative to docs/PLAN.md.
  */
 export function generateRoadmap({ name, desc, developer = 'the developer', preset, tasks = [] }) {
   const dateStr = new Date().toISOString().split('T')[0];
@@ -60,6 +62,7 @@ ${desc}
    - **\`P1\` (Should-Have):** Improves the core journey: polish, seed data, secondary flows.
    - **\`P2\` (Later):** Parked until P0 and P1 are done.
 3. **One task at a time:** Finish, verify with \`npm run verify:agent\`, and commit a task before starting the next.
+4. **Specs:** Link approved tasks to their spec. When the final linked task closes, archive the spec and update every roadmap link in the same commit. See the [spec lifecycle](specs/README.md).
 
 ---
 

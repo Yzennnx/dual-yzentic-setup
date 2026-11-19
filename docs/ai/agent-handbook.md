@@ -33,7 +33,7 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
   | :--- | :--- | :--- |
   | `npm run scout -- "<task>"` | Find the files and ranges a task touches, when they are not known | A brief of at most 40 lines |
   | `npm run verify:agent` | Write tests for untested changes; diagnose long or browser failures | Pass, an excerpt, or a root-cause note |
-  | `npm run review` | Review the branch diff against its spec and plan | Findings, at most 60 lines |
+  | `npm run review -- --plan <spec-file>` | Review the branch diff against its spec and plan | Findings, at most 60 lines |
 
 ---
 
@@ -50,9 +50,9 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
 
 | Scenario / Task | Process Skill | Purpose |
 | :--- | :--- | :--- |
-| **Tier 3 work only** | `superpowers:using-superpowers` | Process skills apply to Tier 3. Tier 1 uses `fast-track`; Tier 2 uses a short design in chat |
+| **Tier 3 work only** | `superpowers:using-superpowers` | Process skills apply to Tier 3. Tier 1 uses `fast-track`; Tier 2 uses chat for short fixes or a short [spec](../specs/README.md) for meaningful changes |
 | **New subsystem or architectural change** | `superpowers:brainstorming` | Discovery of intent, requirements, and design, in chat |
-| **Tier 3 design and plan** | `superpowers:writing-plans` | The task format: each task names its tests. The approved chat design is saved unchanged in `docs/specs/`; implementation and review roles follow the selected preset |
+| **Tier 3 design and plan** | `superpowers:writing-plans` | The task format: each task names its tests. Save the approved [spec](../specs/README.md) unchanged in `docs/specs/active/` and link its roadmap tasks; implementation and review roles follow the selected preset |
 | **Executing implementation plans** | `builder` agent (`.claude/agents/builder.md`) | All of a branch's plan tasks in one launch, on Sonnet, with a fresh context |
 | **Writing a test yourself** | `superpowers:test-driven-development` | Red-Green-Refactor, when the Gatekeeper was skipped or a plan task names the test |
 | **Bug fixing or troubleshooting** | `superpowers:systematic-debugging` | Root-cause investigation before proposing fixes (no guessing) |

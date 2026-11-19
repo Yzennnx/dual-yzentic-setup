@@ -7,4 +7,4 @@
 - For Windows hook fixtures, put Git Bash's sh on PATH for npm verification.
 - The blueprint is uninitialized. Wayfinder handles app kickoff, then the approved project rules feed tailor-setup.
 - Separate open items from the prior session: investigate slow commit-hook verification and check whether origin needs the GitHub repository rename.
-- Open first: docs/ai/workflows.md and docs/specs/2026-11-19-workflow-switcher-plan.md.
+- Open first: docs/ai/workflows.md and docs/specs/archive/2026-11-19-workflow-switcher-plan.md.

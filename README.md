@@ -61,7 +61,7 @@ hand off        when the next task does not fit (Tier 3, new area, 3 tasks done,
 | Tier | Scope | Process | Verification |
 | :--- | :--- | :--- | :--- |
 | **1: Express** | CSS, copy, Markdown, static assets | `fast-track`: edit and commit | No tests; passes in under a second |
-| **2: Standard** | Any change that touches no risky surface, of any size | A design in chat, then build; no document, no review | The project's tests, or one file with `--scope`; e2e when a user-facing flow changed |
+| **2: Standard** | Any change that touches no risky surface, of any size | Chat for short fixes or a [short spec](docs/specs/README.md) for meaningful changes. No review. | The project's tests, or one file with `--scope`; e2e when a user-facing flow changed |
 | **3: Risky surface** | Schemas, sync, shared domain rules, API contracts, auth, interfaces between apps | The approved chat design (tasks name their tests) saved as the plan, implement under the selected preset, review once, merge into local `main` | The full suite, plus e2e once before review |
 
 The surface sets the tier, not the number of files.

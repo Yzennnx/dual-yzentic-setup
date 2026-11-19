@@ -51,6 +51,19 @@ class TestRoadmap(unittest.TestCase):
         text = self.render()
         self.assertIn("None yet.", text[text.index(P2):])
 
+    def test_shared_spec_links_include_each_tasks_anchor(self):
+        spec = "specs/active/2026-11-19-canvas-plan.md"
+        tasks = [
+            dict(TASKS[0], spec=f"{spec}#task-1-canvas-shell"),
+            dict(TASKS[1], spec=f"{spec}#task-2-seed-flows"),
+            dict(TASKS[0], id="3.1", title="Backlog idea"),
+        ]
+        text = self.render(tasks)
+        self.assertEqual(text.count("**Spec:**"), 2)
+        self.assertIn(f"[Approved spec]({spec}#task-1-canvas-shell)", text)
+        self.assertIn(f"[Approved spec]({spec}#task-2-seed-flows)", text)
+        self.assertIn("**Task 3.1: Backlog idea**", text)
+
     def test_contains_all_required_sections(self):
         text = self.render()
         for section in [

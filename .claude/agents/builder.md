@@ -1,6 +1,6 @@
 ---
 name: builder
-description: Implements one task, or a named group of tasks, from an approved plan in docs/specs/. Use for Tier 3 plan tasks (one run per branch), and for larger Tier 2 changes whose design was approved in chat. Give it the plan path and task numbers (or the approved design text) and the branch to work on.
+description: Implements one task, or a named group of tasks, from a roadmap-linked approved spec in docs/specs/active/. Use for Tier 3 plan tasks (one run per branch), and for larger Tier 2 changes whose design was approved in chat. Give it the plan path and task numbers (or the approved design text) and the branch to work on.
 model: sonnet
 ---
 

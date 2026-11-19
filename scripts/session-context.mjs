@@ -140,9 +140,9 @@ export function buildContext(root = REPO_ROOT) {
     ...workflowLines(root),
     'Run `npm run workflow -- status` at task start or after switching. Follow the roles for this checkout.',
     'Process by tier (the surface sets the tier, not the size): Tier 1 = fast-track only, no documents or agents. '
-      + 'Tier 2 = no risky surface: design in chat, wait for a yes, no spec or plan file, no review. '
+      + 'Tier 2 = no risky surface: chat for short fixes, linked spec for meaningful changes, one approval, no review. '
       + 'Tier 3 = a risky surface (schema, sync, shared domain rules, API, auth, app interfaces): design in chat ending '
-      + 'with tasks that name their tests, one yes, save it unchanged as the plan, implement and review according to '
+      + 'with tasks that name their tests, one yes, save it unchanged in docs/specs/active/ and link its tasks, implement and review according to '
       + 'the selected workflow, then merge into local main after full verification.',
     'Tests: never run a full suite directly; use `npm run verify:agent`. '
       + 'Start from the handoff below and open only the files it lists.',

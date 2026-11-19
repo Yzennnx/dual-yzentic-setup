@@ -54,5 +54,14 @@ class TestRootRules(unittest.TestCase):
             for retired in ["rules/frontend.md", "rules/backend.md", "rules/requirements.md", "npm run init:project", "DESIGN.md"]:
                 self.assertNotIn(retired, content, f"{name} still mentions {retired}")
 
+    def test_shared_rules_describe_the_spec_policy_by_tier(self):
+        agents = (self.root / "AGENTS.md").read_text(encoding="utf-8")
+        guide = (self.root / "docs" / "ai" / "workflows.md").read_text(encoding="utf-8")
+        for content in (agents, guide):
+            self.assertIn("short fixes", content)
+            self.assertIn("meaningful behavior change", content)
+            self.assertIn("docs/specs/active/", content)
+            self.assertNotIn("No spec, plan file", content)
+
 if __name__ == "__main__":
     unittest.main()

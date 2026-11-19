@@ -11,7 +11,9 @@ STUB = Path(__file__).resolve().parent / "stubs" / "agy_stub.mjs"
 REVIEW = repo_fixture.SCRIPTS / "review.mjs"
 SPEC = "docs/specs/demo-design.md"
 FIRST_PLAN = "docs/specs/2026-01-01-first-plan.md"
-LAST_PLAN = "docs/specs/2026-02-02-second-plan.md"
+LEGACY_PLAN = "docs/specs/2026-02-02-second-plan.md"
+ACTIVE_PLAN = "docs/specs/active/2026-01-01-active-plan.md"
+ARCHIVED_PLAN = "docs/specs/archive/2026-01-01-archived-plan.md"
 PLAIN_PATHS_RULE = (
     "Reply in plain text. Refer to files by repo-relative path with forward slashes. "
     "Do not use Markdown links or absolute paths."
@@ -81,14 +83,18 @@ class TestReview(unittest.TestCase):
         self.assertIn("src/alpha.js", self.diff())
         self.assertIn("src/beta.js", self.diff())
 
-    def test_prompt_names_the_diff_spec_and_last_plan_and_is_read_only(self):
+    def test_prompt_names_the_diff_rules_and_only_active_branch_spec(self):
+        commit_file(self.root, ARCHIVED_PLAN, "# Archived spec\n")
+        commit_file(self.root, ACTIVE_PLAN, "# Active spec\n")
         self.review()
         args = self.recorded_args()[0]
         self.assertNotIn("--mode", args)
         prompt = args[1]
         self.assertIn(".agents/sync/review.diff", prompt)
         self.assertIn(SPEC, prompt)
-        self.assertIn(LAST_PLAN, prompt)
+        self.assertIn(ACTIVE_PLAN, prompt)
+        self.assertNotIn(ARCHIVED_PLAN, prompt)
+        self.assertNotIn(LEGACY_PLAN, prompt)
         self.assertNotIn(FIRST_PLAN, prompt)
         for heading in ("Critical", "Important", "Minor"):
             self.assertIn(heading, prompt)
@@ -175,7 +181,55 @@ class TestReview(unittest.TestCase):
         self.assertIn("docs/specs/other-design.md", prompt)
         self.assertIn("docs/specs/other-plan.md", prompt)
         self.assertNotIn(SPEC, prompt)
-        self.assertNotIn(LAST_PLAN, prompt)
+        self.assertNotIn(LEGACY_PLAN, prompt)
+
+    def test_explicit_active_archived_and_legacy_plans(self):
+        commit_file(self.root, ACTIVE_PLAN, "# Active spec\n")
+        self.assertEqual(self.review("--plan", ACTIVE_PLAN).returncode, 0)
+        self.assertIn(f"Plan: {ACTIVE_PLAN}", self.prompt())
+        moved_plan = ACTIVE_PLAN.replace("/active/", "/archive/")
+        (self.root / moved_plan).parent.mkdir()
+        git(self.root, "mv", ACTIVE_PLAN, moved_plan)
+        git(self.root, "commit", "-q", "-m", "Archive the completed spec")
+        for plan in (moved_plan, LEGACY_PLAN):
+            with self.subTest(plan=plan):
+                res = self.review("--plan", plan)
+                self.assertEqual(res.returncode, 0, res.stderr)
+                self.assertIn(f"Plan: {plan}", self.recorded_args()[-1][1])
+
+    def test_multiple_active_specs_require_explicit_selection_before_launch(self):
+        commit_file(self.root, ACTIVE_PLAN, "# First active spec\n")
+        other = "docs/specs/active/2026-05-20-other-feature-plan.md"
+        commit_file(self.root, other, "# Second active spec\n")
+        res = self.review()
+        self.assertEqual(res.returncode, 1, res.stdout)
+        for expected in ("--plan", ACTIVE_PLAN, other):
+            self.assertIn(expected, res.stderr)
+        self.assertFalse(self.args_file.exists())
+        self.assertFalse((self.root / ".agents" / "sync" / "review.diff").exists())
+        self.assertEqual(self.review("--plan", other).returncode, 0)
+        self.assertIn(f"Plan: {other}", self.prompt())
+
+    def test_no_active_candidate_leaves_unrelated_plans_out(self):
+        commit_file(self.root, ACTIVE_PLAN, "# Existing active spec\n")
+        git(self.root, "branch", "-f", "main", "HEAD")
+        commit_file(self.root, "src/gamma.js")
+        res = self.review()
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertIn(f"Spec: {SPEC}", self.prompt())
+        self.assertNotIn("Plan:", self.prompt())
+
+    def test_modified_active_spec_is_selected_and_keeps_blueprint_source_rules(self):
+        commit_file(self.root, ACTIVE_PLAN, "# Existing active spec\n")
+        git(self.root, "branch", "-f", "main", "HEAD")
+        commit_file(self.root, ACTIVE_PLAN, "# Updated active spec\n")
+        blueprint = json.loads((self.root / "project-blueprint.json").read_text(encoding="utf-8"))
+        blueprint["project"]["source_rules"] = "docs/rules/README.md"
+        commit_file(self.root, "project-blueprint.json", json.dumps(blueprint))
+        res = self.review()
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertIn("Spec: docs/rules/README.md", self.prompt())
+        self.assertIn(f"Plan: {ACTIVE_PLAN}", self.prompt())
 
     def test_an_absolute_path_is_made_repo_relative_with_forward_slashes(self):
         absolute = self.root / "docs" / "specs" / "demo-design.md"

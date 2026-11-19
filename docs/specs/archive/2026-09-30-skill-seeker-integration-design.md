@@ -9,14 +9,14 @@
 
 ## 1. Executive Summary & Context
 
-`Yzentic-setup` provides an AI-driven development environment with 20 modular domain skills, standardized operational gates, and tiered execution lanes. Currently, the repository relies on static domain skills authored in [`.agents/skills/`](../../.agents/skills/) and external discovery via [`find-skills`](../../.agents/skills/find-skills/SKILL.md) (which searches pre-built packages on `skills.sh`).
+`Yzentic-setup` provides an AI-driven development environment with 20 modular domain skills, standardized operational gates, and tiered execution lanes. Currently, the repository relies on static domain skills authored in [`.agents/skills/`](../../../.agents/skills/) and external discovery via [`find-skills`](../../../.agents/skills/find-skills/SKILL.md) (which searches pre-built packages on `skills.sh`).
 
 When developers adopt bleeding-edge frameworks (e.g. Next.js canary, new state managers), private internal company SDKs, or complex architectural PDF specifications, AI agents encounter knowledge cutoffs or lack specific domain knowledge, leading to API hallucinations and token waste.
 
 This specification introduces **Skill Seeker** (`yusufkaraaslan/Skill_Seekers`) into `Yzentic-setup` through a **Hybrid Pipeline**:
-1. An on-demand domain skill ([`.agents/skills/skill-seeker/`](../../.agents/skills/skill-seeker/)) powered by an ephemeral `uvx` CLI runner (zero root repository dependency bloat).
-2. A safe staging gate ([`.agents/skills/_staging/`](../../.agents/skills/_staging/)) with automated frontmatter and link compliance validation before catalog promotion.
-3. Integration with the existing meta-skills ([`find-skills`](../../.agents/skills/find-skills/SKILL.md) and [`skill-creator`](../../.agents/skills/skill-creator/SKILL.md)).
+1. An on-demand domain skill ([`.agents/skills/skill-seeker/`](../../../.agents/skills/skill-seeker/)) powered by an ephemeral `uvx` CLI runner (zero root repository dependency bloat).
+2. A safe staging gate ([`.agents/skills/_staging/`](../../../.agents/skills/_staging/)) with automated frontmatter and link compliance validation before catalog promotion.
+3. Integration with the existing meta-skills ([`find-skills`](../../../.agents/skills/find-skills/SKILL.md) and [`skill-creator`](../../../.agents/skills/skill-creator/SKILL.md)).
 4. Model Context Protocol (MCP) server configuration guides for live tool-calling in Cursor, Claude Code, and Antigravity.
 
 ---
@@ -54,19 +54,19 @@ This specification introduces **Skill Seeker** (`yusufkaraaslan/Skill_Seekers`) 
 ```
 
 ### Component 1: Domain Skill Package (`.agents/skills/skill-seeker/`)
-- **[`SKILL.md`](../../.agents/skills/skill-seeker/SKILL.md):** Defines skill metadata, triggers (`ingest docs`, `create skill from repo`, `parse api pdf`, `skill seeker`), operational instructions, and safety rules.
-- **[`scripts/seek.py`](../../.agents/skills/skill-seeker/scripts/seek.py):** Orchestration CLI tool:
+- **[`SKILL.md`](../../../.agents/skills/skill-seeker/SKILL.md):** Defines skill metadata, triggers (`ingest docs`, `create skill from repo`, `parse api pdf`, `skill seeker`), operational instructions, and safety rules.
+- **[`scripts/seek.py`](../../../.agents/skills/skill-seeker/scripts/seek.py):** Orchestration CLI tool:
   - Invokes `skill-seekers` via `uvx --from skill-seekers skill-seekers`.
   - Arguments:
     - `--url <url>`: Target documentation website.
     - `--repo <owner/repo>`: GitHub repository for AST analysis.
     - `--pdf <path>`: Local PDF file.
     - `--name <skill-name>`: Identifier for the generated skill.
-    - `--promote <skill-name>`: Validates and promotes a staged skill into active [`.agents/skills/`](../../.agents/skills/).
+    - `--promote <skill-name>`: Validates and promotes a staged skill into active [`.agents/skills/`](../../../.agents/skills/).
     - `--list-staged`: Lists all draft skills currently in `_staging/`.
 
 ### Component 2: Staging Area & Compliance Validator
-- **Directory:** [`.agents/skills/_staging/`](../../.agents/skills/_staging/)
+- **Directory:** [`.agents/skills/_staging/`](../../../.agents/skills/_staging/)
 - **Isolation:** Staged skills are ignored by the standard test suite and git tracking (via `.gitignore` rule `.agents/skills/_staging/*` with `!.agents/skills/_staging/.gitkeep`).
 - **Validation Rules (Enforced by `seek.py` prior to promotion):**
   1. `SKILL.md` must exist and contain valid YAML frontmatter between `---` delimiters.
@@ -76,12 +76,12 @@ This specification introduces **Skill Seeker** (`yusufkaraaslan/Skill_Seekers`) 
   5. The target directory name must match `name:` in `SKILL.md`.
 
 ### Component 3: Meta-Skill Routing & Workflows
-- **[`find-skills`](../../.agents/skills/find-skills/SKILL.md):** Updated to add `skill-seeker` as the automated fallback when `npx skills find` yields no results.
-- **[`skill-creator`](../../.agents/skills/skill-creator/SKILL.md):** Can be run against any promoted skill to author evaluation test cases and benchmark triggering accuracy.
-- **[`docs/ai/agent-handbook.md`](../ai/agent-handbook.md):** Added to the domain skills quick-selection table under *"On-demand documentation ingestion & skill synthesis"*.
+- **[`find-skills`](../../../.agents/skills/find-skills/SKILL.md):** Updated to add `skill-seeker` as the automated fallback when `npx skills find` yields no results.
+- **[`skill-creator`](../../../.agents/skills/skill-creator/SKILL.md):** Can be run against any promoted skill to author evaluation test cases and benchmark triggering accuracy.
+- **[`docs/ai/agent-handbook.md`](../../ai/agent-handbook.md):** Added to the domain skills quick-selection table under *"On-demand documentation ingestion & skill synthesis"*.
 
 ### Component 4: MCP Server Configuration
-- In [`docs/ai/architecture.md`](../ai/architecture.md), document standard MCP configuration snippets for assistants:
+- In [`docs/ai/architecture.md`](../../ai/architecture.md), document standard MCP configuration snippets for assistants:
   - **Claude Code CLI:** `claude mcp add skill-seekers -- uvx skill-seekers mcp`
   - **Cursor / Windsurf / Antigravity (`mcp.json`):**
     ```json
@@ -96,12 +96,12 @@ This specification introduces **Skill Seeker** (`yusufkaraaslan/Skill_Seekers`) 
     ```
 
 ### Component 5: Test Suite & Documentation Verification
-- **[`tests/test_skills_structure.py`](../../tests/test_skills_structure.py):**
+- **[`tests/test_skills_structure.py`](../../../tests/test_skills_structure.py):**
   - Update expected skill count to 21 (20 existing + `skill-seeker`).
   - Add `"skill-seeker"` to `required_skills`.
   - Add explicit test asserting `.agents/skills/_staging` is excluded from the domain skills catalog count.
 - **Inventory Updates:**
-  - Update skill count in [`AGENTS.md`](../../AGENTS.md) and [`README.md`](../../README.md) to 21.
+  - Update skill count in [`AGENTS.md`](../../../AGENTS.md) and [`README.md`](../../../README.md) to 21.
 
 ---
 

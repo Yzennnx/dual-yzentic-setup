@@ -2,7 +2,7 @@
 
 - **Date:** 2026-10-08
 - **Status:** Draft / Ready for Review
-- **Repository:** [`dual-yzentic-setup`](../../)
+- **Repository:** [`dual-yzentic-setup`](../../../)
 - **Target Context:** 24-Hour Hackathon Rapid Prototyping & Claude Pro Token Preservation
 
 ---
@@ -20,7 +20,7 @@ This specification details the architecture, file layout, and synchronization pr
 - **Claude Code (The Builder):** Dedicated strictly to planning, UX architecture, and source code implementation. Instructed *never* to run raw test runners directly.
 - **Antigravity (The Gatekeeper):** Dedicated to headless test authoring, test execution (Vitest, Playwright, Pytest), and error distillation. Antigravity absorbs all verbose terminal traces and browser DOM snapshots, returning only a 5-10 line root-cause diagnostic.
 - **Lightweight Baton Runner (`scripts/baton.ts`):** A repo-native Node.js script that mediates state transitions and headless handoffs via `.agents/sync/` without background daemon overhead.
-- **Curated Hackathon Skill Arsenal:** Integrated skills for token compression ([`caveman`](../../.agents/skills/caveman/SKILL.md)), minimalist code ([`ponytail`](../../.agents/skills/ponytail/SKILL.md)), elite UI/UX ([`ui-ux-pro-max`](../../.agents/skills/ui-ux-pro-max/SKILL.md), [`impeccable`](../../.agents/skills/impeccable/SKILL.md)), pitch diagrams ([`archify`](../../.agents/skills/archify/SKILL.md)), mock data ([`demo-seed-data`](../../.agents/skills/demo-seed-data/SKILL.md)), and pitch strategy ([`pitch-architect`](../../.agents/skills/pitch-architect/SKILL.md)).
+- **Curated Hackathon Skill Arsenal:** Integrated skills for token compression ([`caveman`](../../../.agents/skills/caveman/SKILL.md)), minimalist code ([`ponytail`](../../../.agents/skills/ponytail/SKILL.md)), elite UI/UX ([`ui-ux-pro-max`](../../../.agents/skills/ui-ux-pro-max/SKILL.md), [`impeccable`](../../../.agents/skills/impeccable/SKILL.md)), pitch diagrams ([`archify`](../../../.agents/skills/archify/SKILL.md)), mock data ([`demo-seed-data`](../../../.agents/skills/demo-seed-data/SKILL.md)), and pitch strategy ([`pitch-architect`](../../../.agents/skills/pitch-architect/SKILL.md)).
 
 ---
 
@@ -56,7 +56,7 @@ dual-yzentic-setup/
 - **Primary Domain:** `src/`, component architecture, feature planning.
 - **Directives:**
   1. **Strictly Prohibited:** Do NOT run `npm test`, `pytest`, `playwright test`, or full build commands directly.
-  2. **Token Economy:** Activate [`caveman`](../../.agents/skills/caveman/SKILL.md) to strip conversational fluff. Activate [`ponytail`](../../.agents/skills/ponytail/SKILL.md) to enforce the simplest possible implementation with minimal dependencies.
+  2. **Token Economy:** Activate [`caveman`](../../../.agents/skills/caveman/SKILL.md) to strip conversational fluff. Activate [`ponytail`](../../../.agents/skills/ponytail/SKILL.md) to enforce the simplest possible implementation with minimal dependencies.
   3. **Verification Interface:** When code changes are made, run:
      ```bash
      npm run verify:agent
@@ -165,11 +165,11 @@ stateDiagram-v2
 
 | Phase of Hackathon | Key Skills to Trigger | Expected Outcome |
 | :--- | :--- | :--- |
-| **Hours 0–2: Ideation & Architecture** | `superpowers:brainstorming`, [`archify`](../../.agents/skills/archify/SKILL.md) | Clarify MVP scope; generate architecture diagrams for slides early. |
-| **Hours 2–18: Rapid Build Sprint** | [`ponytail`](../../.agents/skills/ponytail/SKILL.md), [`caveman`](../../.agents/skills/caveman/SKILL.md), [`ui-ux-pro-max`](../../.agents/skills/ui-ux-pro-max/SKILL.md) | Fast, minimalistic coding; zero bloated dependencies; tight token usage. |
-| **Continuous: Testing & Verification** | `npm run verify:agent`, [`webapp-testing`](../../.agents/skills/webapp-testing/SKILL.md) | Antigravity runs unit & Playwright tests in background; Claude stays clean. |
-| **Hours 18–21: UI Polish & Seed Data** | [`impeccable`](../../.agents/skills/impeccable/SKILL.md), [`demo-seed-data`](../../.agents/skills/demo-seed-data/SKILL.md) | Polish button contrast and typography; seed live charts, avatars, transactions. |
-| **Hours 21–24: Pitch & Submission** | [`pitch-architect`](../../.agents/skills/pitch-architect/SKILL.md), [`banner-design`](../../.agents/skills/banner-design/SKILL.md), [`slides`](../../.agents/skills/slides/SKILL.md) | Generate 3-minute demo script, slide deck, and Devpost cover banner. |
+| **Hours 0–2: Ideation & Architecture** | `superpowers:brainstorming`, [`archify`](../../../.agents/skills/archify/SKILL.md) | Clarify MVP scope; generate architecture diagrams for slides early. |
+| **Hours 2–18: Rapid Build Sprint** | [`ponytail`](../../../.agents/skills/ponytail/SKILL.md), [`caveman`](../../../.agents/skills/caveman/SKILL.md), [`ui-ux-pro-max`](../../../.agents/skills/ui-ux-pro-max/SKILL.md) | Fast, minimalistic coding; zero bloated dependencies; tight token usage. |
+| **Continuous: Testing & Verification** | `npm run verify:agent`, [`webapp-testing`](../../../.agents/skills/webapp-testing/SKILL.md) | Antigravity runs unit & Playwright tests in background; Claude stays clean. |
+| **Hours 18–21: UI Polish & Seed Data** | [`impeccable`](../../../.agents/skills/impeccable/SKILL.md), [`demo-seed-data`](../../../.agents/skills/demo-seed-data/SKILL.md) | Polish button contrast and typography; seed live charts, avatars, transactions. |
+| **Hours 21–24: Pitch & Submission** | [`pitch-architect`](../../../.agents/skills/pitch-architect/SKILL.md), [`banner-design`](../../../.agents/skills/banner-design/SKILL.md), [`slides`](../../../.agents/skills/slides/SKILL.md) | Generate 3-minute demo script, slide deck, and Devpost cover banner. |
 
 ---
 
@@ -190,7 +190,7 @@ The dual-agent setup is complete and verified when:
 
 ## 8. Two-Developer Collaboration & The Universal Living Plan (`docs/PLAN.md`)
 
-To keep **both human developers and their AI agents synchronized** in a fast-paced 24-hour hackathon, the repository includes a single source of truth: [`docs/PLAN.md`](../PLAN.md).
+To keep **both human developers and their AI agents synchronized** in a fast-paced 24-hour hackathon, the repository includes a single source of truth: [`docs/PLAN.md`](../../PLAN.md).
 
 ### The Synchronized Team Model
 - **Dev 1 (You) + Claude Code:** Primarily driving core architecture, UI, and features.
@@ -198,7 +198,7 @@ To keep **both human developers and their AI agents synchronized** in a fast-pac
 
 ### Handling New Features & Scope Creep
 When a teammate wants to add a new feature outside the original scope:
-1. **Rule of the Universal Plan:** No rogue code without a ticket in [`docs/PLAN.md`](../PLAN.md). Either developer or their agent can add a proposed item to the plan.
+1. **Rule of the Universal Plan:** No rogue code without a ticket in [`docs/PLAN.md`](../../PLAN.md). Either developer or their agent can add a proposed item to the plan.
 2. **Feature Classification & Prioritization:**
    - **P0 (Must-Have for Demo):** Core user loop required for judges to understand the product.
    - **P1 (High Impact Polish):** Enhancements that elevate the demo if time permits.
@@ -207,7 +207,7 @@ When a teammate wants to add a new feature outside the original scope:
 
 ### Iterative Revision & On-Demand Skill Triggering
 In a 24-hour sprint, the plan is **living and iterative**, not carved in stone:
-- **Frequent Revisions are Expected:** When a feature is finished or scope pivots, check off the task in [`docs/PLAN.md`](../PLAN.md) and commit.
+- **Frequent Revisions are Expected:** When a feature is finished or scope pivots, check off the task in [`docs/PLAN.md`](../../PLAN.md) and commit.
 - **On-Demand Skill Tagging:** Every feature task in `docs/PLAN.md` can declare which skill to invoke when building it:
   ```markdown
   - [ ] **Feature: Landing Page Hero & Value Prop**
@@ -222,5 +222,5 @@ In a 24-hour sprint, the plan is **living and iterative**, not carved in stone:
     - Skills: `archify`
     - Status: Backlog
   ```
-- **Git Sync Cadence:** Both developers pull before starting a new task and push immediately upon completing a slice (`git commit -m "feat: complete user auth (P0)"`). Because both agents inspect [`docs/PLAN.md`](../PLAN.md) and `.agents/sync/`, neither agent hallucinates obsolete requirements.
+- **Git Sync Cadence:** Both developers pull before starting a new task and push immediately upon completing a slice (`git commit -m "feat: complete user auth (P0)"`). Because both agents inspect [`docs/PLAN.md`](../../PLAN.md) and `.agents/sync/`, neither agent hallucinates obsolete requirements.
 

@@ -1,5 +1,6 @@
 import json
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -51,6 +52,28 @@ class TestBatonRunner(unittest.TestCase):
         res = self.run_node_eval(code)
         self.assertEqual(res.returncode, 0, res.stderr)
         self.assertEqual(json.loads(res.stdout), ["docs/specs/gone.md", "docs/specs/nope.md"])
+
+    def test_missing_specs_checks_nested_links_without_their_heading_anchors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for folder in ("active", "archive"):
+                specs = root / "docs" / "specs" / folder
+                specs.mkdir(parents=True)
+                (specs / "here.md").write_text("# Task 1\n", encoding="utf-8")
+            (root / "docs" / "PLAN.md").write_text(
+                "[Active](specs/active/here.md#task-1)\n"
+                "[Archived](specs/archive/here.md#task-1)\n"
+                "[Missing active](specs/active/gone.md#task-1)\n"
+                "[Missing archive](specs/archive/gone.md#task-2)\n",
+                encoding="utf-8",
+            )
+            code = f"""
+            import {{ missingSpecs }} from './scripts/baton.mjs';
+            console.log(JSON.stringify(missingSpecs({json.dumps(str(root))})));
+            """
+            res = self.run_node_eval(code)
+            self.assertEqual(res.returncode, 0, res.stderr)
+            self.assertEqual(json.loads(res.stdout), ["docs/specs/active/gone.md", "docs/specs/archive/gone.md"])
 
     def test_circuit_breaker(self):
         code = """

@@ -2,7 +2,7 @@
 
 - **Date:** 2026-10-11
 - **Status:** Draft / Pending Review
-- **Repository:** [`dual-yzentic-setup`](../../)
+- **Repository:** [`dual-yzentic-setup`](../../../)
 - **Builds on:** [`2026-10-08-project-blueprint-dynamic-tailoring-design.md`](2026-10-08-project-blueprint-dynamic-tailoring-design.md)
 
 ---
@@ -10,10 +10,10 @@
 ## 1. Objective
 
 ### Problem Statement
-`npm run init:project` tailors the repository from one of four fixed archetypes. Real projects rarely match a preset, so the active skills, the roadmap in [`docs/PLAN.md`](../PLAN.md), the rules in [`docs/rules/`](../rules/README.md), the starter scaffold, and the baton's test command all stay generic after initialization.
+`npm run init:project` tailors the repository from one of four fixed archetypes. Real projects rarely match a preset, so the active skills, the roadmap in [`docs/PLAN.md`](../../PLAN.md), the rules in [`docs/rules/`](../../rules/README.md), the starter scaffold, and the baton's test command all stay generic after initialization.
 
 ### Intended Outcome
-At project kickoff, after the team has brainstormed the project into a design spec in [`docs/specs/`](./), one skill turns that spec into a setup that fits the project: the right skills active, a roadmap of the real features, rules for the real stack, a scaffold from the stack's own generator, and a baton that runs the project's own tests.
+At project kickoff, after the team has brainstormed the project into a design spec in [`docs/specs/`](../), one skill turns that spec into a setup that fits the project: the right skills active, a roadmap of the real features, rules for the real stack, a scaffold from the stack's own generator, and a baton that runs the project's own tests.
 
 ### Success Criteria
 1. A project whose stack matches no archetype can be fully tailored from its spec without hand-editing setup files.
@@ -24,7 +24,7 @@ At project kickoff, after the team has brainstormed the project into a design sp
 ### Out of Scope
 - Re-tailoring mid-project as the plan evolves. `tailor` refuses to run on an initialized blueprint without `--force`.
 - Feeding lessons from a finished project back into the template.
-- New archetypes or changes to [`scripts/scaffolder.mjs`](../../scripts/scaffolder.mjs).
+- New archetypes or changes to [`scripts/scaffolder.mjs`](../../../scripts/scaffolder.mjs).
 
 ---
 
@@ -50,13 +50,13 @@ Rejected alternatives: a prompt-only skill (non-deterministic, token-heavy, unte
 7. The agent rewrites the prose files (Section 6) and scaffolds `src/` (Section 7).
 8. The agent runs `npm run verify:agent`, which now uses the project's commands.
 
-`init:project` remains the quick archetype path. Both paths set `status: "initialized"`, so Gate 0 in [`AGENTS.md`](../../AGENTS.md) passes either way.
+`init:project` remains the quick archetype path. Both paths set `status: "initialized"`, so Gate 0 in [`AGENTS.md`](../../../AGENTS.md) passes either way.
 
 ---
 
 ## 4. The Manifest
 
-The manifest extends the existing `project` block of [`project-blueprint.json`](../../project-blueprint.json). The `archetypes` block is not modified.
+The manifest extends the existing `project` block of [`project-blueprint.json`](../../../project-blueprint.json). The `archetypes` block is not modified.
 
 ```json
 "project": {
@@ -97,7 +97,7 @@ The manifest extends the existing `project` block of [`project-blueprint.json`](
 | `roadmap` | yes | At least one task. `id` unique; `priority` one of `P0`, `P1`, `P2`; `owner` one of `dev1`, `dev2`; `title` and `description` non-empty. |
 
 ### Always-Kept Skills
-`tailor-setup`, `fast-track`, `caveman`, and `ponytail` stay active whether or not they are listed, because [`AGENTS.md`](../../AGENTS.md) and [`CLAUDE.md`](../../CLAUDE.md) reference them directly.
+`tailor-setup`, `fast-track`, `caveman`, and `ponytail` stay active whether or not they are listed, because [`AGENTS.md`](../../../AGENTS.md) and [`CLAUDE.md`](../../../CLAUDE.md) reference them directly.
 
 ---
 
@@ -126,7 +126,7 @@ All paths resolve from a `root` parameter defaulting to the repo root, so tests 
 Add `syncSkillsToList(names)`: archive every active skill not in `names`, restore every archived skill in `names`, and return `{ active_count, archived_count, disabled, enabled }`. It throws before moving anything if a name exists in neither directory. A name is only recognised if it matches `^[a-z0-9][a-z0-9-]*$`, which excludes `_staging` and path traversal. `syncSkillsToArchetype` becomes a wrapper that looks up `keep_skills` and calls it, preserving its current return shape.
 
 ### 5.3 `scripts/roadmap.mjs` (new, extracted)
-`generateRoadmap` moves out of [`scripts/init-project.mjs`](../../scripts/init-project.mjs) and takes a `tasks` array instead of hardcoding tasks. `init-project.mjs` passes its current six placeholder tasks, so its output is unchanged. Tasks are grouped under the existing `P0` / `P1` / `P2` headings, owners resolve to team names, and every task starts as `[ ]` with `Status: Backlog`. The P2 heading is `## P2: Post-Hackathon Stretch`, replacing the wizard's current `## P2: Post-Hackathon / Stretch Goals`, which the plan-integrity test does not accept. A priority with no tasks keeps its heading with "None yet." beneath it, because [`tests/test_plan_integrity.py`](../../tests/test_plan_integrity.py) requires the sections.
+`generateRoadmap` moves out of [`scripts/init-project.mjs`](../../../scripts/init-project.mjs) and takes a `tasks` array instead of hardcoding tasks. `init-project.mjs` passes its current six placeholder tasks, so its output is unchanged. Tasks are grouped under the existing `P0` / `P1` / `P2` headings, owners resolve to team names, and every task starts as `[ ]` with `Status: Backlog`. The P2 heading is `## P2: Post-Hackathon Stretch`, replacing the wizard's current `## P2: Post-Hackathon / Stretch Goals`, which the plan-integrity test does not accept. A priority with no tasks keeps its heading with "None yet." beneath it, because [`tests/test_plan_integrity.py`](../../../tests/test_plan_integrity.py) requires the sections.
 
 ### 5.4 `scripts/baton.mjs`
 `resolveTestExecution(tier, scope)` gains a third parameter, `verify`, read from `project.verify` in the blueprint by the caller:

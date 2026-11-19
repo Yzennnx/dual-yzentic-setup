@@ -27,6 +27,22 @@ class TestDocsIntegrity(unittest.TestCase):
         specs_dir = self.root / "docs" / "specs"
         self.assertTrue(specs_dir.exists(), "docs/specs/ directory must exist")
 
+    def test_specs_live_in_active_and_archive_directories(self):
+        specs = self.root / "docs" / "specs"
+        self.assertTrue((specs / "active").is_dir())
+        self.assertTrue((specs / "archive").is_dir())
+        self.assertEqual(sorted(path.name for path in specs.glob("*.md")), ["README.md"])
+
+    def test_migrated_spec_relative_links_keep_their_targets(self):
+        archive = self.root / "docs" / "specs" / "archive"
+        plan = (archive / "2026-10-11-tailor-setup-plan.md").read_text(encoding="utf-8")
+        self.assertIn("](2026-10-11-tailor-setup-design.md)", plan)
+        design = (archive / "2026-10-11-tailor-setup-design.md").read_text(encoding="utf-8")
+        self.assertIn("](../)", design)
+        handoff = (self.root / ".agents" / "sync" / "session.md").read_text(encoding="utf-8")
+        for link in re.findall(r"docs/specs/[^\s`]+\.md", handoff):
+            self.assertTrue((self.root / link).is_file(), f"Missing handoff spec: {link}")
+
     def test_no_absolute_file_links(self):
         tracked = subprocess.run(
             ["git", "ls-files", "*.md"], cwd=self.root, capture_output=True, text=True, check=True
@@ -49,12 +65,14 @@ class TestDocsIntegrity(unittest.TestCase):
             self.root / "docs" / "rules" / "architecture.md",
             self.root / "README.md",
             self.root / "docs" / "PLAN.md",
+            self.root / "docs" / "specs" / "README.md",
             self.root / ".agents" / "skills" / "tailor-setup" / "SKILL.md",
             self.root / ".agents" / "skills" / "workflow" / "SKILL.md",
         ]
         for f in files_to_check:
             self.assertTrue(f.exists(), f"File {f.name} must exist")
             content = f.read_text(encoding="utf-8")
+            content = re.sub(r"(?ms)^```[^\n]*\n.*?^```", "", content)
             links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
             for text, url in links:
                 if not url.startswith(("http://", "https://", "#", "mailto:")):

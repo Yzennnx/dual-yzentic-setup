@@ -7,7 +7,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, relative, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchAgy, appendDelegation, describeFailure, PLAIN_PATHS_RULE } from './agy.mjs';
@@ -80,15 +80,12 @@ function readSourceSpec(root) {
 }
 
 /**
- * The lexically last docs/specs/*-plan.md, or null when there is none.
+ * Active specs added or modified in the same committed range as the review.
  */
-function lastPlan(root) {
-  try {
-    const plans = readdirSync(resolve(root, 'docs/specs')).filter(name => name.endsWith('-plan.md')).sort();
-    return plans.length > 0 ? `docs/specs/${plans[plans.length - 1]}` : null;
-  } catch {
-    return null;
-  }
+function activePlans(root, range) {
+  const changed = gitOut(root, ['diff', '--name-only', '-z', '--no-renames', '--diff-filter=AM', range, '--', 'docs/specs/active/']);
+  if (changed === null) throw new Error('Could not find active specs for the review range.');
+  return changed.split('\0').filter(path => path.endsWith('.md'));
 }
 
 function buildPrompt(base, spec, plan) {
@@ -136,7 +133,8 @@ export async function main() {
   }
 
   const base = options.base ?? defaultBase(root);
-  const diff = base ? gitOut(root, ['diff', `${base}..HEAD`]) : '';
+  const range = `${base}..HEAD`;
+  const diff = base ? gitOut(root, ['diff', range]) : '';
   if (diff === null) {
     console.error(`[Review] git diff ${base}..HEAD failed. Is "${base}" a valid ref?`);
     process.exitCode = 1;
@@ -147,13 +145,21 @@ export async function main() {
     return;
   }
 
-  console.log(`[Review] Reviewing ${base}..HEAD`);
+  const candidates = options.plan ? [] : activePlans(root, range);
+  if (candidates.length > 1) {
+    console.error('[Review] Multiple active specs changed. Pass --plan with the roadmap-linked spec:');
+    for (const path of candidates) console.error(`- ${path}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  console.log(`[Review] Reviewing ${range}`);
   const diffPath = resolve(root, DIFF_FILE);
   mkdirSync(dirname(diffPath), { recursive: true });
   writeFileSync(diffPath, diff, 'utf-8');
 
   const specPath = options.spec ?? readSourceSpec(root);
-  const planPath = options.plan ?? lastPlan(root);
+  const planPath = options.plan ?? candidates[0];
   const prompt = buildPrompt(
     base,
     specPath && repoPath(root, specPath),

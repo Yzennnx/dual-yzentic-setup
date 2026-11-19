@@ -16,6 +16,7 @@ import { gatekeeperDisabled, shouldWriteTests, writeTests, repairTests, shouldDi
 import { describeFailure } from './agy.mjs';
 import { checkAll as checkMockups } from './mockups-check.mjs';
 import { checkRules } from './rules-check.mjs';
+import { resolveWorkflow, workflowSummary } from './workflow.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -160,17 +161,6 @@ export function readVerifyConfig(blueprintPath = BLUEPRINT_PATH) {
     return verify;
   } catch {
     return null;
-  }
-}
-
-/**
- * The blueprint's `workflow.mode`: 'agy-build' or 'classic' (the default).
- */
-export function readWorkflowMode(blueprintPath = BLUEPRINT_PATH) {
-  try {
-    return JSON.parse(readFileSync(blueprintPath, 'utf-8')).workflow?.mode === 'agy-build' ? 'agy-build' : 'classic';
-  } catch {
-    return 'classic';
   }
 }
 
@@ -416,13 +406,15 @@ export async function main() {
   const syncJson = syncPaths(root).json;
 
   if (command === 'status') {
+    const workflow = resolveWorkflow(root);
     const state = readSyncState(syncJson);
     const { files: modified, source } = resolveChangeSet(root);
     const tier = detectExecutionTier(modified, readRiskyPaths(resolve(root, 'project-blueprint.json')));
     console.log('\n=== Baton Sync Status ===');
     if (source === 'last-commit') console.log(CLEAN_TREE_NOTE);
     console.log(`Status:       ${state.status}`);
-    console.log(`Active Agent: ${state.active_agent}`);
+    console.log(workflowSummary(workflow));
+    console.log(`Interactive agent: ${workflow.agent}`);
     console.log(`Turn Count:   ${state.turn_count} / ${state.max_turns}`);
     console.log(`Detected Tier:${tier} (${tier === 1 ? 'Express' : tier === 2 ? 'Scoped' : 'Architectural'})`);
     console.log(`Modified:     ${modified.length} files`);
@@ -474,6 +466,7 @@ export async function main() {
   }
 
   if (command === 'verify') {
+    const workflow = resolveWorkflow(root);
     const verifyConfig = readVerifyConfig(resolve(root, 'project-blueprint.json'));
     const wantE2e = args.includes('--e2e') || process.env.npm_config_e2e === 'true';
     if (wantE2e && !verifyConfig?.e2e) {
@@ -552,7 +545,7 @@ export async function main() {
     const branch = currentBranch(root);
     const fast = !full && !scopeOverride && branch !== null && !MAIN_BRANCHES.includes(branch);
     const { command: testCmd, isExpress } = resolveTestExecution(full ? 3 : tier, full ? null : scopeOverride, verifyConfig);
-    const disabled = gatekeeperDisabled(args);
+    const disabled = workflow.solo || gatekeeperDisabled(args);
     // An explicit --scope wins over routes; otherwise routes pick the commands for the changed files
     const commands = isExpress ? [] : full ? [testCmd] : (scopeOverride ? null : planRoutes(modified, verifyConfig, { fast })) ?? (fast ? [] : [testCmd]);
     const verifiedCommand = isExpress ? 'express' : commands.join(' && ') || 'fast: no route';
@@ -578,6 +571,7 @@ export async function main() {
     };
 
     console.log(`\n[Baton] Verifying changes (Tier ${tier}${tierOverride ? ' - set by --tier' : ' - auto-detected'})...`);
+    state.active_agent = workflow.agent.toLowerCase();
     state.gatekeeper = { result: 'not_needed', tests_written: [], out_of_scope: [] };
     state.e2e = 'not_run';
 
@@ -613,8 +607,7 @@ export async function main() {
 
     // An explicit --scope names the test that covers the change, so no tests are owed
     // In agy-build mode the build job already wrote the tests the tasks name; the Gatekeeper does not write more
-    const agyBuild = readWorkflowMode(resolve(root, 'project-blueprint.json')) === 'agy-build';
-    const owesTests = shouldWriteTests({ tier, files: modified, disabled: disabled || Boolean(scopeOverride) || agyBuild });
+    const owesTests = shouldWriteTests({ tier, files: modified, disabled: disabled || Boolean(scopeOverride) || workflow.buildsWithAgy });
     if (owesTests && debug) {
       const sources = modified.filter(isSourceFile);
       state.tests_owed = [...new Set([...(state.tests_owed ?? []), ...sources])];
@@ -717,7 +710,7 @@ export async function main() {
         console.error(diagnosis);
         console.error('----------------------------\n');
       } else {
-        console.error('\n--- Distilled Failure Diagnostic (For Claude Code) ---');
+        console.error('\n--- Distilled Failure Diagnostic ---');
         console.error(distillDiagnostics(testOutput));
         console.error('------------------------------------------------------\n');
       }

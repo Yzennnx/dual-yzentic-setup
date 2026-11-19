@@ -140,6 +140,13 @@ class TestSessionContext(unittest.TestCase):
         text = self.context(self.fixture(session="hello handoff\n", blueprint="{not json"))
         self.assertIn("hello handoff", text)
 
+    def test_session_context_shows_checkout_override_and_agent(self):
+        root = self.fixture(blueprint='{"workflow":{"mode":"classic"}}')
+        (root / ".agents" / "workflow.local.json").write_text('{"mode":"codex-solo"}', encoding="utf-8")
+        context = self.context(root)
+        self.assertIn("Workflow: codex-solo (local override)", context)
+        self.assertIn("Interactive agent: Codex", context)
+
     def test_long_handoff_is_truncated(self):
         session = "\n".join(f"line {i}" for i in range(1, 201))
         text = self.context(self.fixture(session=session))

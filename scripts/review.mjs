@@ -11,6 +11,7 @@ import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, relative, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchAgy, appendDelegation, describeFailure, PLAIN_PATHS_RULE } from './agy.mjs';
+import { resolveWorkflow, soloJobMessage } from './workflow.mjs';
 import { snapshotChanges, checkScope } from './changes.mjs';
 import { readSyncState, writeSyncState, syncPaths } from './baton.mjs';
 
@@ -126,6 +127,13 @@ export async function main() {
     return;
   }
   const { root } = options;
+  const workflow = resolveWorkflow(root);
+  if (workflow.solo) {
+    console.error(soloJobMessage(workflow, 'Review'));
+    console.error('[Review] The developer can provide the independent review, or select a paired preset to delegate it.');
+    process.exitCode = 1;
+    return;
+  }
 
   const base = options.base ?? defaultBase(root);
   const diff = base ? gitOut(root, ['diff', `${base}..HEAD`]) : '';

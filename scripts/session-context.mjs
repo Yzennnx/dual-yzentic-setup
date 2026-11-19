@@ -13,6 +13,7 @@ import { spawnSync } from 'node:child_process';
 import { checkAll as checkMockups } from './mockups-check.mjs';
 import { checkRules } from './rules-check.mjs';
 import { globalSkillsLine } from './global-skills.mjs';
+import { resolveWorkflow, workflowSummary } from './workflow.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,11 +70,12 @@ export function rulesLine(root) {
   }
 }
 
-function modeLine(root) {
+function workflowLines(root) {
   try {
-    return `Mode: ${JSON.parse(readText(path.resolve(root, 'project-blueprint.json'))).workflow?.mode ?? 'classic'}`;
-  } catch {
-    return 'Mode: classic';
+    const workflow = resolveWorkflow(root);
+    return [workflowSummary(workflow), `Interactive agent: ${workflow.agent}`];
+  } catch (err) {
+    return [`Workflow unavailable: ${err.message}`];
   }
 }
 
@@ -135,12 +137,13 @@ export function buildContext(root = REPO_ROOT) {
     ...rulesLine(root),
     ...globalSkillsLine(root),
     blueprintLine(root),
-    modeLine(root),
+    ...workflowLines(root),
+    'Run `npm run workflow -- status` at task start or after switching. Follow the roles for this checkout.',
     'Process by tier (the surface sets the tier, not the size): Tier 1 = fast-track only, no documents or agents. '
       + 'Tier 2 = no risky surface: design in chat, wait for a yes, no spec or plan file, no review. '
       + 'Tier 3 = a risky surface (schema, sync, shared domain rules, API, auth, app interfaces): design in chat ending '
-      + 'with tasks that name their tests, one yes, save it unchanged as the plan, one builder run, '
-      + '`npm run review` once, merge into local main.',
+      + 'with tasks that name their tests, one yes, save it unchanged as the plan, implement and review according to '
+      + 'the selected workflow, then merge into local main after full verification.',
     'Tests: never run a full suite directly; use `npm run verify:agent`. '
       + 'Start from the handoff below and open only the files it lists.',
     '',

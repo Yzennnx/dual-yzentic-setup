@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { launchAgy, appendDelegation, describeFailure, PLAIN_PATHS_RULE } from './agy.mjs';
 import { snapshotChanges, checkScope } from './changes.mjs';
 import { readSyncState, writeSyncState, syncPaths } from './baton.mjs';
+import { resolveWorkflow, soloJobMessage } from './workflow.mjs';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const USAGE = 'Usage: node scripts/scout.mjs [--root <path>] "<task>"';
@@ -84,6 +85,12 @@ export async function main() {
   if (!task) {
     console.error(USAGE);
     process.exitCode = 1;
+    return;
+  }
+
+  const workflow = resolveWorkflow(root);
+  if (workflow.solo) {
+    console.log(soloJobMessage(workflow, 'Scout'));
     return;
   }
 

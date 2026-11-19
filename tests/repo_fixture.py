@@ -84,9 +84,7 @@ def make_template_repo(tmp, skills=True):
 
     (root / "docs").mkdir()
     (root / "docs" / "PLAN.md").write_text("ORIGINAL PLAN\n", encoding="utf-8")
-    (root / ".gitignore").write_text(
-        ".agents/sync/*\n!.agents/sync/session.md\n!.agents/sync/.gitkeep\n", encoding="utf-8"
-    )
+    shutil.copyfile(REPO_ROOT / ".gitignore", root / ".gitignore")
     return root
 
 

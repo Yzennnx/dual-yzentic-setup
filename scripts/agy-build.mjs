@@ -18,6 +18,7 @@ import { execFileSync } from 'node:child_process';
 import { launchAgy, appendDelegation, describeFailure, PLAIN_PATHS_RULE } from './agy.mjs';
 import { readSyncState, writeSyncState, syncPaths } from './baton.mjs';
 import { gitChange, changedRules, ruleTestLines } from './rules-check.mjs';
+import { resolveWorkflow, soloJobMessage } from './workflow.mjs';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const USAGE = 'Usage: node scripts/agy-build.mjs [--root <path>] (--plan <file> --tasks <list> | --design <file> | --qa <area>)';
@@ -121,6 +122,12 @@ export async function main() {
     return;
   }
   const { root } = parsed;
+  const workflow = resolveWorkflow(root);
+  if (workflow.solo) {
+    console.error(soloJobMessage(workflow, parsed.qa ? 'QA' : 'Build'));
+    process.exitCode = 1;
+    return;
+  }
   const rules = parsed.qa ? [] : changedRules(gitChange(root).diff);
   const jobs = jobsFor({ qa: Boolean(parsed.qa), rules });
   for (const job of jobs) {

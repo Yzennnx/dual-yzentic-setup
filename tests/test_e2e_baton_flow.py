@@ -60,7 +60,7 @@ class TestE2EBatonFlow(unittest.TestCase):
         cmd = ["node", str(BATON), *args, "--root", str(fixture)]
         base_env = {k: v for k, v in os.environ.items() if k not in ("npm_config_tier", "npm_config_scope", "BATON_HOOK")}
         base_env["BATON_GATEKEEPER"] = "0"  # these runs are about the gate, so they must never launch the real agy
-        return subprocess.run(cmd, cwd=fixture, capture_output=True, text=True, env={**base_env, **(env or {})})
+        return subprocess.run(cmd, cwd=fixture, capture_output=True, text=True, env={**base_env, **(env or {})}, timeout=45)
 
     def test_tier_1_express_pass(self):
         code = f"""
@@ -111,6 +111,27 @@ class TestE2EBatonFlow(unittest.TestCase):
         res = self.baton(self.make_fixture(), "verify", "--tier", "1")
         self.assertEqual(res.returncode, 0, res.stderr)
         self.assertIn("Tier 1 Express Lane", res.stdout)
+
+    def test_workflow_presets_control_test_writing_and_failure_diagnosis(self):
+        test_cmd = 'node -e "console.error(123); process.exit(1)"'
+        for preset in ("codex-solo", "claude-solo", "agy-solo", "codex-agy", "classic", "agy-build"):
+            with self.subTest(preset=preset):
+                fixture = self.make_verify_fixture(test_cmd)
+                preference = fixture / ".agents" / "workflow.local.json"
+                preference.write_text(json.dumps({"mode": preset}), encoding="utf-8")
+                args_file = Path(self.tmp.name) / f"{preset}.jsonl"
+                env = {
+                    "BATON_GATEKEEPER": "1", "BATON_AGY_CMD": str(REPO_ROOT / "tests" / "stubs" / "agy_stub.mjs"),
+                    "BATON_DIAGNOSE_MIN_LINES": "0", "STUB_MODE": "success", "STUB_ARGS_FILE": str(args_file),
+                    "VERIFY_LOCK_HELD": "1",  # isolated fixture, independent of the parent's machine-wide lock
+                }
+                res = self.baton(fixture, "verify", "--full", env=env)
+                self.assertEqual(res.returncode, 1, res.stdout + res.stderr)
+                self.assertIn("FAIL: Verification failed", res.stderr)
+                count = len(args_file.read_text(encoding="utf-8").splitlines()) if args_file.exists() else 0
+                expected = int(preset in ("classic", "codex-agy")) + int(not preset.endswith("-solo"))
+                self.assertEqual(count, expected, res.stdout + res.stderr)
+                self.assertIn(f"Workflow: {preset} (local override)", self.baton(fixture, "status").stdout)
 
     def test_root_flag_isolates_state(self):
         fixture = self.make_fixture()

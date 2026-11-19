@@ -226,6 +226,18 @@ class TestReview(unittest.TestCase):
         self.assertIn("[Review]", res.stderr)
         self.assertFalse(self.args_file.exists())
 
+    def test_review_can_resume_after_switching_from_solo_to_paired(self):
+        local = self.root / ".agents" / "workflow.local.json"
+        local.write_text('{"mode":"codex-solo"}', encoding="utf-8")
+        solo = self.review()
+        self.assertNotEqual(solo.returncode, 0)
+        self.assertIn("independent review", solo.stderr)
+        self.assertFalse(self.args_file.exists())
+        local.write_text('{"mode":"codex-agy"}', encoding="utf-8")
+        paired = self.review()
+        self.assertEqual(paired.returncode, 0, paired.stderr)
+        self.assertEqual(len(self.recorded_args()), 1)
+
     def test_the_delegation_entry_lands_in_handoff_json(self):
         self.review()
         state = json.loads((self.root / ".agents" / "sync" / "handoff.json").read_text(encoding="utf-8"))

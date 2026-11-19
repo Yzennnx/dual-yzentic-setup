@@ -120,6 +120,13 @@ class TestScout(unittest.TestCase):
         self.assertNotEqual(res.stdout.strip(), "ok")
         self.assertFalse((self.root / ".agents" / "sync" / "scout.md").exists())
 
+    def test_solo_scout_returns_work_to_the_interactive_agent(self):
+        (self.root / ".agents" / "workflow.local.json").write_text('{"mode":"agy-solo"}', encoding="utf-8")
+        res = self.scout("find login")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertIn("Antigravity in the interactive session", res.stdout)
+        self.assertFalse(self.args_file.exists())
+
     def test_the_delegation_entry_lands_in_handoff_json(self):
         self.scout("add login")
         entry = self.sync_state()["delegations"][0]

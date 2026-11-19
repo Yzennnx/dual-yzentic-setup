@@ -111,9 +111,10 @@ function buildDiagnosePrompt(root) {
 }
 
 /**
- * Run one launch with active_agent set to antigravity, restore claude whatever happens, and log the delegation.
+ * Mark the delegate active for one launch, then restore the interactive agent.
  */
 function launchAsAntigravity(state, saveState, options) {
+  const interactiveAgent = state.active_agent;
   state.active_agent = 'antigravity';
   saveState();
   try {
@@ -121,7 +122,7 @@ function launchAsAntigravity(state, saveState, options) {
     appendDelegation(state, result.entry);
     return result;
   } finally {
-    state.active_agent = 'claude';
+    state.active_agent = interactiveAgent;
     saveState();
   }
 }

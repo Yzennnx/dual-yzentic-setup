@@ -62,6 +62,12 @@ class TestWorkflow(unittest.TestCase):
         self.assertNotIn("secret-like", result)
         self.assertIn("classic", self.workflow("reset"))
 
+    def test_reset_clears_preference_even_if_blueprint_is_invalid(self):
+        self.workflow("claude-solo")
+        self.blueprint("invalid")
+        self.assertIn("project-blueprint.json", self.workflow("reset", ok=False))
+        self.assertFalse(self.preference.exists())
+
     def test_checkout_local_and_only_ignored_file_changes(self):
         (self.root / ".gitignore").write_bytes((REPO_ROOT / ".gitignore").read_bytes())
         (self.root / "AGENTS.md").write_text("keep these rules", encoding="utf-8")

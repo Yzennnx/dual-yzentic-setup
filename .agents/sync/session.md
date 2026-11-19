@@ -1,18 +1,10 @@
 # Session Handoff
 
-- **Done:** Wayfinder is now the kickoff front door. `.agents/skills/wayfinder/SKILL.md` is adapted from mattpocock/skills (MIT). Merged to `main` and pushed (`621d1f9`).
-- **How kickoff works now:**
-  - The blueprint is uninitialized, so run wayfinder in kickoff mode. It does a breadth-first pass and tags each open decision as answerable now or fog (research, prototype, task, blocked-by).
-  - Two or more fog items, or one that blocks other decisions, means it charts a map in `docs/wayfinder/` (`map.md` plus `tickets/NN-<slug>.md`). Otherwise it hands off to brainstorming, then a spec, then `tailor-setup`.
-  - One ticket per session. When the map is clear, the decisions collapse into `docs/rules/`, the map is archived, and `tailor-setup` runs.
-  - `npm run init:project` is retired: kickoff is wayfinder, then the design in `docs/rules/`, then `tailor-setup`.
-- **Decisions:**
-  - Tracker is local markdown, not GitHub Issues.
-  - The upstream "Notes may enable execution" override is removed: wayfinder never writes to `src/`.
-  - For prototypes, the developer picks the variant.
-- **Open:**
-  - `ALWAYS_KEPT_SKILLS` in `scripts/tailor.mjs` does not include wayfinder, so `tailor` may archive it after kickoff. Fine for kickoff only; add it if wayfinder should also be used for big features mid-project.
-  - The commit-hook baton took 15 to 20 minutes per commit on the builder's two commits (measured 56 s before). Investigate.
-  - GitHub says the repo moved to `Yzennnx/dual-yzentic-setup`. Update `origin`.
-  - No project has been started yet.
-- **Open these first:** `.agents/skills/wayfinder/SKILL.md`, `CLAUDE.md`.
+- Workflow switcher implemented on feat/workflow-switcher. Preset commits: 7671f1c, 750bb61, 793dcf6, d7ec6c5.
+- Antigravity reviewed d7ec6c5. Scoped test follow-up now clears only explicitly covered paths, fallback assignment persists, and reset clears a local pin even with an invalid blueprint.
+- The checkout follows classic by default. Run npm run workflow -- list or npm run workflow -- status for presets and ownership.
+- Solo presets use the current interactive agent. Tier 3 still needs an independent check before merge.
+- For Windows hook fixtures, put Git Bash's sh on PATH for npm verification.
+- The blueprint is uninitialized. Wayfinder handles app kickoff, then the approved project rules feed tailor-setup.
+- Separate open items from the prior session: investigate slow commit-hook verification and check whether origin needs the GitHub repository rename.
+- Open first: docs/ai/workflows.md and docs/specs/2026-11-19-workflow-switcher-plan.md.

@@ -183,24 +183,32 @@ class TestE2EBatonFlow(unittest.TestCase):
     def test_outstanding_tests_are_separate_from_a_passing_solo_run(self):
         command = 'node -e "process.exit(0)"'
         fixture = self.make_verify_fixture(command, scoped_command=command)
+        (fixture / "src" / "app.js").write_text("module.exports = 2;\n", encoding="utf-8")
+        (fixture / "src" / "other.js").write_text("module.exports = 3;\n", encoding="utf-8")
         stub = REPO_ROOT / "tests" / "stubs" / "agy_stub.mjs"
         res = self.baton(fixture, "verify", "--full", env={"BATON_GATEKEEPER": "1", "BATON_AGY_CMD": str(stub), "STUB_MODE": "status_timeout"})
         self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
         self.assertIn("Gatekeeper skipped", res.stdout)
+        express = self.baton(fixture, "verify", "--tier", "1")
+        self.assertEqual(express.returncode, 0, express.stdout + express.stderr)
+        self.assertIn("Tests owed:   src/app.js, src/other.js (owner: Claude)", self.baton(fixture, "status").stdout)
         local = fixture / ".agents" / "workflow.local.json"
         local.write_text('{"mode":"codex-solo"}', encoding="utf-8")
         solo = self.baton(fixture, "verify", "--full")
         self.assertEqual(solo.returncode, 0, solo.stderr)
         status = self.baton(fixture, "status").stdout
         self.assertIn("Status:       verified", status)
-        self.assertIn("Tests owed:   src/app.js (owner: Codex)", status)
-        # A scoped run names the existing test that covers this source edit.
+        self.assertIn("Tests owed:   src/app.js, src/other.js (owner: Codex)", status)
+        # App is already committed, while unrelated source and covering test edits remain.
+        subprocess.run(["git", "commit", "-qm", "fix app", "--", "src/app.js"], cwd=fixture, check=True)
         (fixture / "tests").mkdir()
         (fixture / "tests" / "app.test.js").write_text("// fixture covering test\n", encoding="utf-8")
-        (fixture / "src" / "app.js").write_text("module.exports = 2;\n", encoding="utf-8")
         scoped = self.baton(fixture, "verify", "--tier", "2", "--scope", "tests/app.test.js")
         self.assertEqual(scoped.returncode, 0, scoped.stdout + scoped.stderr)
-        self.assertNotIn("Tests owed:", self.baton(fixture, "status").stdout)
+        self.assertIn("Tests owed:   src/app.js, src/other.js (owner: Codex)", self.baton(fixture, "status").stdout)
+        covered = self.baton(fixture, "verify", "--tier", "2", "--scope", "tests/app.test.js", "--covers", "src/app.js")
+        self.assertEqual(covered.returncode, 0, covered.stdout + covered.stderr)
+        self.assertIn("Tests owed:   src/other.js (owner: Codex)", self.baton(fixture, "status").stdout)
 
     def test_solo_source_edit_does_not_record_test_debt_from_the_heuristic(self):
         fixture = self.make_verify_fixture('node -e "process.exit(0)"')

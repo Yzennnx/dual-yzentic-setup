@@ -63,9 +63,9 @@ Active milestone: **Workflow setup complete; waiting for a project to start**
   - **Status:** Done
   - **Description:** Opt-in end-to-end runs, no repeated run on commit, diagnosis only when needed, a fast model for scout and diagnosis, and lighter process rules. Plan: [`2026-10-12-faster-verification-plan.md`](specs/2026-10-12-faster-verification-plan.md).
 
-- [ ] **Task 0.7: Switchable Agent Workflows**
+- [x] **Task 0.7: Switchable Agent Workflows**
   - **Priority:** P0
-  - **Status:** In progress
+  - **Status:** Done
   - **Description:** Add checkout-local solo and paired presets, shared role resolution, and handoff guidance. Plan: [`2026-11-19-workflow-switcher-plan.md`](specs/2026-11-19-workflow-switcher-plan.md).
 
 - [ ] **Task 1.1: Core Application Shell & Navigation**

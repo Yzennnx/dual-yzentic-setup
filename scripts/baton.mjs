@@ -496,6 +496,7 @@ export async function main() {
     // Determine tier & scope: flags win, then npm's own config for `npm run verify:agent --tier 2` (no `--`)
     let tierOverride = null;
     let scopeOverride = null;
+    const covers = new Set();
 
     for (let i = 1; i < args.length; i++) {
       if (args[i] === '--tier' && args[i + 1]) {
@@ -503,6 +504,13 @@ export async function main() {
       }
       if (args[i] === '--scope' && args[i + 1]) {
         scopeOverride = args[i + 1];
+      }
+      if (args[i] === '--covers') {
+        const path = args[++i];
+        if (!path || path.startsWith('--')) {
+          throw new Error('--covers requires an owed repository-relative source path.');
+        }
+        covers.add(path.replaceAll('\\', '/'));
       }
     }
     if (!tierOverride && process.env.npm_config_tier) {
@@ -545,6 +553,9 @@ export async function main() {
     const branch = currentBranch(root);
     const fast = !full && !scopeOverride && branch !== null && !MAIN_BRANCHES.includes(branch);
     const { command: testCmd, isExpress } = resolveTestExecution(full ? 3 : tier, full ? null : scopeOverride, verifyConfig);
+    if (covers.size > 0 && (full || isExpress || !scopeOverride || !isTestFile(scopeOverride.replaceAll('\\', '/')) || !existsSync(resolve(root, scopeOverride)))) {
+      throw new Error('--covers requires a scoped Tier 2 or Tier 3 run of an existing test file.');
+    }
     const disabled = workflow.solo || gatekeeperDisabled(args);
     // An explicit --scope wins over routes; otherwise routes pick the commands for the changed files
     const commands = isExpress ? [] : full ? [testCmd] : (scopeOverride ? null : planRoutes(modified, verifyConfig, { fast })) ?? (fast ? [] : [testCmd]);
@@ -616,7 +627,10 @@ export async function main() {
       console.log('[Baton] Source changed with no test changes: asking the Gatekeeper to write tests...');
       const owed = (state.tests_owed ?? []).filter(path => existsSync(resolve(root, path)));
       const outcome = writeTests({ root, state, files: [...new Set([...modified, ...owed])], saveState });
-      if (outcome.testsWritten.length > 0) state.tests_owed = [];
+      if (outcome.testsWritten.length > 0) {
+        state.tests_owed = [];
+        state.tests_owed_interactive = false;
+      }
       state.gatekeeper = { result: outcome.result, tests_written: outcome.testsWritten, out_of_scope: outcome.outOfScope };
       if (outcome.outOfScope.length > 0) {
         settle('gatekeeper_out_of_scope');
@@ -627,6 +641,7 @@ export async function main() {
       }
       if (outcome.result === 'skipped') {
         state.tests_owed = [...new Set([...owed, ...modified.filter(isSourceFile)])];
+        state.tests_owed_interactive = true;
         console.log(`[Baton] Gatekeeper skipped (${describeFailure(outcome.reason, outcome.detail)}): tests for this change are still owed.`);
       } else if (outcome.testsWritten.length > 0) {
         console.log(`[Baton] Gatekeeper wrote: ${outcome.testsWritten.join(', ')}`);
@@ -689,9 +704,9 @@ export async function main() {
 
     if (testSuccess) {
       state.turn_count = 0; // reset turn count on success
-      // An explicit scope identifies an existing test that covers the current change.
-      if (!full && !isExpress && scopeOverride && isTestFile(scopeOverride.replaceAll('\\', '/')) && existsSync(resolve(root, scopeOverride))) {
-        state.tests_owed = (state.tests_owed ?? []).filter(path => !modified.includes(path));
+      if (covers.size > 0) {
+        state.tests_owed = (state.tests_owed ?? []).filter(path => !covers.has(path));
+        if (state.tests_owed.length === 0) state.tests_owed_interactive = false;
       }
       settle('verified');
       if (full) console.log(recordFullVerify(root, verifiedCommand));

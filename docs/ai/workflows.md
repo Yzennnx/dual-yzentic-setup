@@ -19,6 +19,8 @@ Use `npm run workflow -- list` to see presets, `npm run workflow -- status` to s
 
 If the next role belongs to another agent, open its interactive session in the same checkout. Check the preset at task start, after a switch, and when resuming. Wait for the current command to finish before resuming in another agent. Solo runs in that session with headless jobs and subagents disabled.
 
+`agy-build` assigns implementation to the Antigravity build job by default. Paired presets also retain the explicit `npm run agy:build` and `npm run agy:qa` commands for a developer-directed job.
+
 ### Handoff while a task is in progress
 
 Before changing sessions mid-task, write `.agents/sync/resume.md` with the task's branch, tier, agreed behavior or approved plan, current changes, verification commands and results, known tests or review still owed, and the next step. This local note survives verification, switching, and `npm run sync:reset`. Start the next session on the same branch, read the note and current diff, and honor the recorded approval for the same design. Note the outcome of any remaining item in the resume note. When the task ends, mark the note complete and record the final state in the session handoff. A switch between tasks only needs the preset selection.
@@ -37,7 +39,7 @@ Every logic change needs covering tests that pass. Use the existing tests if the
 
 - In solo, the interactive agent writes any new ordinary tests and diagnoses failures. A source change without a test edit is a prompt to check coverage. Such a prompt does not establish that a test is missing.
 - In eligible paired runs, the baton asks Antigravity to write missing tests when source files changed and no test file did. If Gatekeeper is bypassed or unavailable, the interactive agent owns the ordinary missing tests. A failing delegated test may reveal a code or test error. Verify against the approved behavior.
-- `npm run sync:status` reports recorded tests owed and their current owner separately from verification. Resolve the recorded item by confirming its covering test and running a scoped verification for the same source change. A full suite pass alone keeps the recorded follow-up visible.
+- `npm run sync:status` reports recorded tests owed and their owner separately from verification. Confirm coverage, then name the covered source on the scoped run, for example `npm run verify:agent -- --tier 2 --scope tests/app.test.js --covers src/app.js`. Repeat `--covers` when that test covers multiple owed paths. A pass clears only the named paths. A full suite pass alone keeps the recorded follow-up visible.
 - When the implementer owns a new test, use red-green-refactor. Write a minimal failing test, verify that it fails for the expected reason, implement the behavior, verify it passes, and refactor with green tests.
 - Verify through the baton. Use `npm run verify:agent -- --tier 2 --scope <test file>` for a covering file, and `npm run verify:agent -- --tier 3` for the tier-specific fixture or project checks. On feature branches the baton runs configured routes for the change. On the clean final tip `--full` runs the whole suite and records the merge evidence. The hook reuses a matching verification result for the same content.
 - Keep unit and component tests fast. End-to-end tests are for user journeys named in the design and live under `e2e/`. Run them through `npm run verify:agent -- --e2e` when defined for the project. The commit hook skips E2E.

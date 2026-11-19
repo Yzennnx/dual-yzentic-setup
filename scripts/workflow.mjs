@@ -93,11 +93,13 @@ function main(args, root) {
     console.log(Object.keys(PRESETS).join('\n'));
     return;
   }
-  const defaultMode = readBlueprintMode(root);
   const local = resolve(root, LOCAL);
   if (command === 'reset') {
     rmSync(local, { force: true });
-  } else if (command !== 'status') {
+    console.log('Local workflow preference cleared.');
+  }
+  const defaultMode = readBlueprintMode(root);
+  if (command !== 'status' && command !== 'reset') {
     validateMode(command, 'command arguments');
     writePreference(local, command);
   }

@@ -217,7 +217,7 @@ export function diagnoseFailure({ root, state, output, saveState = () => {} }) {
 export function testDebtLine(state, workflow) {
   const owed = state.tests_owed ?? [];
   if (owed.length === 0) return null;
-  const interactiveOwnsTests = workflow?.solo || state.gatekeeper?.result === 'skipped';
+  const interactiveOwnsTests = workflow?.solo || state.tests_owed_interactive || state.gatekeeper?.result === 'skipped';
   const pairedOwner = workflow?.buildsWithAgy ? 'Antigravity build job' : 'Antigravity (Gatekeeper)';
   const owner = interactiveOwnsTests ? workflow?.agent ?? state.active_agent : pairedOwner;
   return `Tests owed:   ${owed.join(', ')} (owner: ${owner})`;

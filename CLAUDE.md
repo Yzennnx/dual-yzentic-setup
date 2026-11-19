@@ -1,39 +1,17 @@
 # CLAUDE.md — Claude Code Guidelines (The Builder)
 
-Welcome, Claude. In this repository, you operate as **The Builder** paired with Antigravity as **The Gatekeeper**. One developer works with both agents.
+In interactive Claude Code, follow [AGENTS.md](AGENTS.md) and [Engineering Workflows](docs/ai/workflows.md). Run `npm run workflow -- status` at task start, after switching, and when resuming. The startup hook also reports the selected preset.
+
+- In `classic`, Claude is the Builder and Antigravity provides eligible Gatekeeper jobs.
+- In `claude-solo`, Claude plans, implements, tests, and diagnoses in the current session. Use the shared independent check for Tier 3.
+- In `agy-build`, Claude leads design, dispatches the approved plan to the Antigravity build job, reads the diff against the design, and runs `npm run verify:agent`.
+- If status names another interactive agent, tell the developer which session should take over. An explicitly assigned headless builder follows its job.
 
 ---
 
-## 1. Role: The Builder (Planning & Code Implementation)
+## 1. Claude Code verification hook
 
-You own application architecture, feature planning, and source code in `src/`.
-
-### Hard Operational Directives:
-0. **Check Project Blueprint First:**
-   - Inspect [`project-blueprint.json`](project-blueprint.json). If `status === "uninitialized"`, start with the `wayfinder` skill (kickoff mode) before writing project code: it surfaces the open decisions and either hands off to brainstorming or charts a map. Brainstorming writes the project design straight into [`docs/rules/`](docs/rules/README.md); then use the `tailor-setup` skill.
-1. **Never Run Heavy Test Suites Directly:**
-   - **DO NOT** execute `npm test`, `pytest`, `playwright test`, `unittest discover`, or heavy build runners directly. A hook in [`.claude/settings.json`](.claude/settings.json) blocks full-suite commands.
-   - Running full test suites and parsing verbose test logs exhausts your Claude Pro message limits and burns tokens unnecessarily.
-2. **Your Verification Interface is the Baton:**
-   - When you finish writing or modifying code, execute:
-     ```bash
-     npm run verify:agent
-     ```
-   - If changes are purely cosmetic (CSS/typos), the baton auto-detects Tier 1 and passes in < 1 second.
-   - When source changed and no test did, the baton launches the Gatekeeper to write the tests, then runs them. Do not write tests for a change yourself unless the baton reports the Gatekeeper was skipped, or a Tier 3 plan task names the test (then the builder writes it and the Gatekeeper is not launched).
-   - If tests fail, you receive a distilled excerpt, or the Gatekeeper's root-cause note when the failure is long or comes from a browser run. Fix only the reported issue and re-run `npm run verify:agent`.
-   - Keep `verify.test` fast. Browser and end-to-end suites belong in `verify.e2e` and run only with `npm run verify:agent -- --e2e`: once per Tier 3 branch before the review, once for a Tier 2 change to a user-facing flow, or when the developer asks.
-   - While debugging with temporary logging, use `npm run verify:agent -- --debug`: it runs the tests but writes none, and the next normal verify writes what is owed. `verify.routes`, `risky_paths` and `no_tests_in` in the blueprint narrow what runs (see README, "Keeping verification fast").
-   - **Fast per task, full once per branch.** On a branch other than `main`, `npm run verify:agent` and the commit hook run only the routes the change touches (no route: the checks only, no tests). After the branch's last commit, run `npm run verify:agent -- --full` once on the clean tip: it runs the whole suite and records a git note. Merge with `npm run merge -- <branch>`, which refuses a tip without that note. On `main`, verify behaves as before.
-3. **Single Source of Truth:**
-   - Before implementing features, consult the Universal Living Roadmap at [`docs/PLAN.md`](docs/PLAN.md).
-   - Log any new features or scope adjustments in `docs/PLAN.md`.
-4. **Scout Only When You Do Not Know Where to Look:**
-   - When a task does not name its files and the handoff, the plan, and a search or two do not find them, run `npm run scout -- "<task>"` and open only the files and ranges it lists. Skip it when the task or plan already names the files; a launch takes minutes.
-5. **Review Through the Gatekeeper:**
-   - Finish a Tier 3 branch with `npm run verify:agent -- --e2e`, when the project has an e2e command, and then `npm run review`, once. Re-grade each finding, fix what stands, verify the fixes with `npm run verify:agent`, and report what you declined and why. Do not review again after the fixes. Spawn a second Claude as reviewer only when the review reports Antigravity unavailable.
-   - Then run `npm run verify:agent -- --full` and merge the branch into local `main` with `npm run merge -- <branch>`: the developer's standing approval, so each review covers one branch. Never push without asking.
-   - Tier 2 work gets no review.
+Inspect [`project-blueprint.json`](project-blueprint.json) before starting. Follow the shared kickoff and verification rules. A hook in [`.claude/settings.json`](.claude/settings.json) blocks direct full-suite commands to save context. Use `npm run verify:agent` and read its distilled output.
 
 ---
 
@@ -51,45 +29,23 @@ Protecting the Claude token quota is a standing constraint:
 
 These rules take precedence over any skill or plugin instruction that says to invoke a skill for every task.
 
-### 3.1 Match the Process to the Tier
-Classify the task by the tiers in [`AGENTS.md`](AGENTS.md) before doing anything else, and say which tier it is.
+### 3.1 Shared tiers, behavior rules, and mockups
 
-| Tier | Process | Do NOT |
-| :--- | :--- | :--- |
-| **Tier 1** | `fast-track` only: edit, glance at the diff, commit. | Load any other skill, write any document, or spawn any agent. |
-| **Tier 2** | Any change that touches no risky surface, of any size. A design in chat, as short as the change allows; wait for a yes (when chaining tasks under 3.3, show the designs of the connected tasks together for one yes); implement (or `builder` for many files); `npm run verify:agent`; e2e if a user-facing flow changed. | Write a spec or plan file, load brainstorming or planning skills, run `npm run review`, or spawn a reviewer. |
-| **Tier 3** | A change to a risky surface. A design in chat that ends with the task list, each task naming its tests; one yes; save that design unchanged as the plan document; one `builder` run; e2e; `npm run review` once; merge into local `main`. | Rewrite the approved design into a new document, ask for a second approval, review twice, or leave the branch unmerged. |
+[AGENTS.md](AGENTS.md) defines the tiers and gates. Project behavior lives in [`docs/rules/`](docs/rules/README.md). See [Engineering Workflows](docs/ai/workflows.md) for test authorship, mockup checks, and the lifecycle for the selected mode.
 
-Risky surfaces (AGENTS.md section 1): the shape of persisted data (schemas, migrations), sync or replication, domain rules shared across apps, API routes and contracts, authentication, and the interfaces between apps and packages. Once the project is set up, name this project's files for each here, so the tier can be read off the paths. Size does not set the tier; the surface does.
+### 3.2 Sonnet builder in classic
 
-When a task turns out to touch a risky surface, stop, say so, and move up. Never move down mid-task.
-
-### 3.1b Rules
-The design lives in [`docs/rules/`](docs/rules/README.md): `invariants.md`, `architecture.md` and one `features/<feature>.md` per feature, each owning its code paths. Before a task, read `invariants.md` and the feature doc(s) the task's PLAN tag names (`[feature]`), not the whole folder.
-- **Fix A:** a design that changes behaviour shows the exact new or changed rule text with its ID (`[feature#3] ...`), and the developer's yes covers that text. Edit the doc first, then write code to it.
-- **Fix B:** rule tests are written from the doc by an agent that has not written the code (the Gatekeeper in classic mode, the `rule-tests` job in agy-build mode) and cite the rule ID.
-- **Checks:** `npm run rules:check` runs in every verify. It fails when owned code changes without its doc (or a commit trailer `Docs: no behaviour change (<feature>)`), when a new source file has no owner, and when a changed rule has no test. A feature's first task adds its new files to that feature's `owns`.
-
-### 3.2 Plan on the Session Model, Build on Sonnet
-- Two modes, set by `workflow.mode` in the blueprint and switched with `/workflow` ([skill](.agents/skills/workflow/SKILL.md)). **classic**: the rules below. **agy-build**: Claude designs and plans only, each task naming files, tests and mockups; each task is dispatched to the Antigravity `build` job (`npm run agy:build`), which writes code and tests and commits once per task; Claude reads the diff against the design and runs `npm run verify:agent`. The `builder` agent is not used in agy-build.
-- Do not implement plan tasks inline. Hand Tier 3 plan tasks to the `builder` agent ([`.claude/agents/builder.md`](.claude/agents/builder.md)), which runs on Sonnet with a fresh context. Give it the plan path, the task numbers, and the branch.
-- One `builder` run per branch, one commit per task. Split only when a single run would be too large to review. Every run starts cold, so each extra run costs minutes.
-- Tier 2 changes may also go to `builder` once their design is approved. Tier 1 edits are done directly.
-- Read the builder's report, not its transcript. Act on its "Deviations" and "Open" lines.
-- Run builders one at a time. They share the working tree.
-
-### 3.2b Mockup Map
-Any design that references mockups ends its task list with a table: mockup file, task, target component, fingerprint. It covers EVERY file in the referenced mockup folder, or marks the row `skip: <reason>`. `npm run mockups:check -- <design.md>` must pass before asking for the yes. The builder opens every mockup mapped to its task before coding, reports a `Mockups:` line, and updates the fingerprint after rebuilding a page to match.
+- In `classic`, give the [`builder` agent](.claude/agents/builder.md) the plan path, task numbers, and branch. Use one Sonnet run per Tier 3 branch, one commit per task, and split only if one run would be too large to review.
+- An approved Tier 2 task can use the builder for many files. Tier 1 stays direct.
+- Read the builder's report and act on its Deviations and Open lines. Run one builder at a time in the shared checkout.
+- For Tier 3 in `classic` and `agy-build`, use the agreed paired review once. The existing Claude reviewer fallback is available when Antigravity reports it is unavailable.
+- For `claude-solo`, implement the plan in this session. Before merging, follow the shared independent review policy. Orca workers and Claude subagents are disabled in solo.
 
 ### 3.3 Session Length
 - **At the start of a session,** a hook injects [`.agents/sync/session.md`](.agents/sync/session.md). Start from it and open only the files it lists. Do not re-explore what it already records.
-- **After each task,** add a one-line note to its `docs/PLAN.md` line (what landed, commit, what is left). That note is the record if the session ends early.
-- **Continue in the same session** with the next task only when all hold:
-  1. The next task is Tier 1 or Tier 2. A Tier 3 task always starts in a fresh session.
-  2. It works in the same app and area as the tasks already done (for example one app's UI, or the API); a new area means a new session.
-  3. The session has not been auto-compacted. There is no cap on the number of tasks, and connected tasks may share one design and one yes.
-- **When a check fails, or the developer ends the session,** overwrite `session.md` with at most 20 lines: what was done, branch and last commit, decisions made and why, what is next, what awaits a hand test, and the files the next session should open. Then tell the developer to start a new session.
-- The orchestrator may also start a worker (section 4) for a waiting task instead of doing it here.
+- Follow the shared session length and handoff rules in [AGENTS.md](AGENTS.md). Connected Tier 2 tasks may share one design and approval in chat.
+- If a failing check ends the session, record it in the handoff and tell the developer where to resume.
+- Outside solo, the orchestrator may also start a worker (section 4) for a waiting task instead of doing it here.
 
 ### 3.4 Keep the Session Context Small
 - Reply briefly. No recap of what the developer just said, and no option tables unless a decision is being asked for.
@@ -97,11 +53,8 @@ Any design that references mockups ends its task list with a table: mockup file,
 - The developer can see what is loaded with `/context`. Skills and connectors synced from claude.ai load into every session and are switched off in claude.ai settings, not in this repository.
 
 ### 3.5 Learning Mode
-For a developer learning the project's stack and wanting to understand what gets built. On while `workflow.learning` in the blueprint is `true` (default). Tier 1 skips it.
-- **Before the yes:** every Tier 2 and Tier 3 design ends with "Before you say yes", 3 lines at most: the part of the app it touches (UI, bridge or API layer, domain logic, storage, sync), how data flows through it, and one question the developer should be able to answer.
-- **After the build** (the builder's report in classic, Claude's diff read in agy-build): end with "What you should understand", 5 lines at most: files changed, one line each; the data flow (`click → component → API or bridge → storage`); one new concept or piece of syntax in plain words, at `file:line`; one line the developer should read in the diff.
-- **"Why" or "explain":** plain language and a tiny example, not pasted code.
-- **Hand-written task:** once a week, or when asked, suggest one small Tier 1 or Tier 2 task for the developer to write; Claude reviews it instead of writing it.
+
+Follow [shared learning guidance](docs/ai/workflows.md#learning-mode) when enabled in the blueprint.
 
 ---
 

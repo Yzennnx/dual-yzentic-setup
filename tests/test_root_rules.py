@@ -34,11 +34,19 @@ class TestRootRules(unittest.TestCase):
         for name in ["AGENTS.md", "CLAUDE.md", ".cursorrules", "README.md"]:
             content = (self.root / name).read_text(encoding="utf-8")
             self.assertIn("docs/rules", content, f"{name} must point at docs/rules")
-        claude = (self.root / "CLAUDE.md").read_text(encoding="utf-8")
-        for phrase in ["### 3.1b Rules", "invariants.md", "Fix A", "rules:check"]:
-            self.assertIn(phrase, claude)
+        agents = (self.root / "AGENTS.md").read_text(encoding="utf-8")
+        for phrase in ["Project behavior rules", "invariants.md", "rule ID", "rules:check"]:
+            self.assertIn(phrase, agents)
         gemini = (self.root / "GEMINI.md").read_text(encoding="utf-8")
         self.assertIn("Tests from rules", gemini)
+
+    def test_interactive_agents_discover_workflow_before_assigning_roles(self):
+        for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md"):
+            text = (self.root / name).read_text(encoding="utf-8")
+            self.assertIn("npm run workflow -- status", text)
+            self.assertIn("docs/ai/workflows.md", text)
+        self.assertIn("claude-solo", (self.root / "CLAUDE.md").read_text(encoding="utf-8"))
+        self.assertIn("agy-solo", (self.root / "GEMINI.md").read_text(encoding="utf-8"))
 
     def test_no_doc_points_at_the_retired_rule_files_or_archetypes(self):
         for name in ["AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md", "docs/ai/agent-handbook.md", "docs/ai/workflows.md"]:

@@ -1,12 +1,12 @@
-# Dual-Agent Setup (Claude Code + Antigravity)
+# Solo and Paired Agent Workflows
 
-**A single-developer AI workflow that keeps Claude for planning and code, and hands scouting, testing, and review to Antigravity.**
+Use one agent directly or pair a coding session with Antigravity. The default `classic` preset uses Claude for design and implementation and Antigravity as the Gatekeeper. The same tiers and verification rules apply in every preset.
 
-This repository is a project template. **Claude Code** is **the Builder**: it plans and writes source code. **Google Antigravity** is **the Gatekeeper**: it finds the files a task touches, writes and diagnoses tests, and reviews branches. Scripts launch Antigravity headlessly, so you work in one Claude session and your Claude quota is spent on planning and code only.
+Run `npm run workflow -- list` to see presets and `npm run workflow -- status` to see who owns the work. Select with `npm run workflow -- <preset>`. For example, `codex-solo`, `claude-solo`, and `agy-solo` keep work in the active session. `codex-agy` pairs Codex with Antigravity. `agy-build` keeps the Antigravity builder workflow. The choice applies to this checkout and switching preserves all tracked rules. `npm run workflow -- reset` restores the blueprint default.
 
----
+See the [workflow guide](docs/ai/workflows.md) for role assignments, independent checks, and how to resume an in-progress task in another session.
 
-## Who Does What
+## Who Does What in Classic
 
 | Job | Done by | How it starts |
 | :--- | :--- | :--- |
@@ -18,7 +18,7 @@ This repository is a project template. **Claude Code** is **the Builder**: it pl
 | Diagnosing a failure | Antigravity | Automatic when the failure is long or comes from a browser run |
 | Reviewing a branch | Antigravity | `npm run review` |
 
-Antigravity is launched with `agy --print`. It can read anything and edit test files; it cannot run commands, and a change to any non-test file fails verification. If `agy` is missing, logged out, out of quota, or too slow, each job falls back to plain behaviour: the existing tests run, Claude gets a trimmed log, and the review reports that it did not happen.
+Classic launches Antigravity with `agy --print`. Its Gatekeeper jobs can read the repository, and test-writing jobs can edit test files. They cannot run commands. The baton checks the delegated file scope. If `agy` is missing, logged out, out of quota, or too slow, the existing tests run, the interactive agent gets a trimmed log, and a skipped review remains outstanding.
 
 ---
 
@@ -42,16 +42,16 @@ Each feature doc names the code it owns (`owns:` in its front matter) and number
 session start   a hook injects .agents/sync/session.md and the blueprint status
 classify        Tier 1, 2, or 3
 scout           npm run scout -- "<task>"            (only when the files are unknown)
-build           Claude; Tier 3 runs its plan in one Sonnet builder run
+build           The selected implementer (Sonnet builder for Tier 3 in classic)
 verify          npm run verify:agent
-                  Gatekeeper writes missing tests -> baton runs them
-                  -> on a long or browser failure, Gatekeeper writes a root-cause note
+                  The assigned test owner writes missing tests -> baton runs them
+                  -> paired presets can request a diagnosis for long or browser failures
 e2e             npm run verify:agent -- --e2e        (Tier 3, once, before review)
-review          npm run review                       (Tier 3, once; then merge into local main)
+review          follow the preset's independent review policy (Tier 3, once)
 commit          the pre-commit hook blocks a failing commit; it skips the run
                 when the same content already passed
 hand off        when the next task does not fit (Tier 3, new area, 3 tasks done,
-                or compacted), Claude rewrites .agents/sync/session.md; you start a new session
+                or compacted), the agent rewrites .agents/sync/session.md; you start a new session
 ```
 
 ---
@@ -62,7 +62,7 @@ hand off        when the next task does not fit (Tier 3, new area, 3 tasks done,
 | :--- | :--- | :--- | :--- |
 | **1: Express** | CSS, copy, Markdown, static assets | `fast-track`: edit and commit | No tests; passes in under a second |
 | **2: Standard** | Any change that touches no risky surface, of any size | A design in chat, then build; no document, no review | The project's tests, or one file with `--scope`; e2e when a user-facing flow changed |
-| **3: Risky surface** | Schemas, sync, shared domain rules, API contracts, auth, interfaces between apps | The approved chat design (tasks name their tests) saved as the plan, one builder run, review once, merge into local `main` | The full suite, plus e2e once before review |
+| **3: Risky surface** | Schemas, sync, shared domain rules, API contracts, auth, interfaces between apps | The approved chat design (tasks name their tests) saved as the plan, implement under the selected preset, review once, merge into local `main` | The full suite, plus e2e once before review |
 
 The surface sets the tier, not the number of files.
 
@@ -86,7 +86,7 @@ Every setting below is optional in `project-blueprint.json`; unset, the baton be
 
 - **`--tier N`** (1, 2 or 3) overrides detection and is printed as "set by --tier".
 - **`project.risky_paths`**: path prefixes of the risky surfaces. When set, all-cosmetic changes are Tier 1, a change under a risky prefix is Tier 3, and anything else is Tier 2 (no file-count rule).
-- **`--debug`** (or `BATON_DEBUG=1`): runs the tests but never launches the Gatekeeper, so temporary logging does not get tests. The source files are kept in the sync state as `tests_owed`, and the next normal `verify` that writes tests includes them, then clears the list.
+- **`--debug`** (or `BATON_DEBUG=1`): runs the tests and defers eligible Gatekeeper test writing while debugging. The source files are kept in sync state as `tests_owed`, so the next eligible paired verification can include them.
 - **`project.verify.routes`**: run only the tests that fit the changed files. Each route has `paths` (prefixes), a `command`, and an optional `setup` that runs once first. The distinct setups and then commands of every matching route run in order; `verify.test` also runs when a changed non-cosmetic file matches no route, or when no route matches. A failure names the command that failed.
 - **`project.verify.no_tests_in`**: folders that must hold no tests (for example Expo Router's route folder, which is bundled into the app). The Gatekeeper is told not to write there, and `verify` fails if any changed or newly written test file is under one.
 - After the Gatekeeper writes tests, the baton runs just those files once; if they fail, the Gatekeeper gets one round to fix its own tests before the normal run.

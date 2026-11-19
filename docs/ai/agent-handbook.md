@@ -10,7 +10,7 @@ Whenever starting a new session in this repository:
 
 0. **Start from the handoff:** Read [`.agents/sync/session.md`](../../.agents/sync/session.md). In Claude Code a hook injects it at session start. Open only the files it lists.
 1. **Inspect Project Blueprint:** Check [`project-blueprint.json`](../../project-blueprint.json). If `status === "uninitialized"`, start with the [`wayfinder`](../../.agents/skills/wayfinder/SKILL.md) skill (kickoff mode) before editing project code. Brainstorming writes the design into [`docs/rules/`](../rules/README.md), then `tailor-setup` runs.
-2. **Inspect Sync Bus:** Run `npm run sync:status` for the baton state and the working-tree change set.
+2. **Check the workflow and sync state:** Run `npm run workflow -- status` in interactive sessions at task start, after a switch, or when resuming. Use `npm run sync:status` for verification and the change set. Read the [workflow guide](workflows.md) for the active roles.
 3. **Check the Universal Living Roadmap:** Find the entry for the task at hand in [`docs/PLAN.md`](../PLAN.md).
 4. **Load on demand:** Open a skill in [`.agents/skills/`](../../.agents/skills/) or a doc in [`docs/rules/`](../rules/README.md) (`invariants.md` plus the one feature doc the task's PLAN tag names) only when the task needs it.
 
@@ -27,7 +27,7 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
   ```bash
   npm run verify:agent
   ```
-- Three commands hand work to the Gatekeeper (Antigravity), each returning a short result:
+- Three commands can hand eligible jobs to the Gatekeeper (Antigravity) in paired presets:
 
   | Command | Gatekeeper job | Returns |
   | :--- | :--- | :--- |
@@ -52,7 +52,7 @@ Do not survey the repository, recent history, or the skills catalogue up front. 
 | :--- | :--- | :--- |
 | **Tier 3 work only** | `superpowers:using-superpowers` | Process skills apply to Tier 3. Tier 1 uses `fast-track`; Tier 2 uses a short design in chat |
 | **New subsystem or architectural change** | `superpowers:brainstorming` | Discovery of intent, requirements, and design, in chat |
-| **Tier 3 design and plan** | `superpowers:writing-plans` | The task format: each task names its tests. The approved chat design is saved unchanged in `docs/specs/`; one `builder` run per branch |
+| **Tier 3 design and plan** | `superpowers:writing-plans` | The task format: each task names its tests. The approved chat design is saved unchanged in `docs/specs/`; implementation and review roles follow the selected preset |
 | **Executing implementation plans** | `builder` agent (`.claude/agents/builder.md`) | All of a branch's plan tasks in one launch, on Sonnet, with a fresh context |
 | **Writing a test yourself** | `superpowers:test-driven-development` | Red-Green-Refactor, when the Gatekeeper was skipped or a plan task names the test |
 | **Bug fixing or troubleshooting** | `superpowers:systematic-debugging` | Root-cause investigation before proposing fixes (no guessing) |
@@ -69,7 +69,7 @@ These ship with the repo because the scripts and agent docs depend on them.
 | **Kickoff of an uninitialized project: surfacing and mapping open decisions** | [`wayfinder`](../../.agents/skills/wayfinder/SKILL.md) | Tags open decisions, then hands off to brainstorming or charts a ticket map in `docs/wayfinder/` |
 | **Tailoring the repo to the design in docs/rules at kickoff** | [`tailor-setup`](../../.agents/skills/tailor-setup/SKILL.md) | Derives skills, roadmap, rules, scaffold, and verify commands from the project design in `docs/rules/` |
 | **Micro-tasks, cosmetic CSS & quick fixes** | [`fast-track`](../../.agents/skills/fast-track/SKILL.md) | Express-lane protocol for token-efficient edits without test ceremony |
-| **Switching between classic and agy-build workflow** | [`workflow`](../../.agents/skills/workflow/SKILL.md) | `/workflow agy-build` or `/workflow classic`: sets `workflow.mode` in the blueprint |
+| **Selecting a solo or paired workflow** | [`workflow`](../../.agents/skills/workflow/SKILL.md) | `npm run workflow -- <preset>` pins the current checkout. `reset` returns to the blueprint default. |
 | **Trying to break an area (QA attacks)** | [`qa-break`](../../.agents/skills/qa-break/SKILL.md) | Attack catalogue, findings in `docs/qa/`, `*.qa.e2e.ts` tests via `npm run e2e:qa` |
 | **Realistic mock & seed data for demos** | [`demo-seed-data`](../../.agents/skills/demo-seed-data/SKILL.md) | Populates dashboards with avatars, realistic names, dynamic metrics |
 | **Delegating between agents or Orca workers** | [`multi-agent-handoff`](../../.agents/skills/multi-agent-handoff/SKILL.md) | Hands task state between subagents and worktrees |

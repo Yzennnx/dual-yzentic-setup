@@ -1,84 +1,57 @@
 # Engineering Workflows & The Superpowers Lifecycle
 
-This document defines the core development lifecycle for `Yzentic-setup`. It unites the **Superpowers** process engineering system with repository-specific domain skills.
+## 1. Workflow presets
 
----
+The tier selects the required checks. The preset selects who performs the work.
 
-## 1. Tiered Execution Lifecycle
+| Preset | Interactive session and implementation | Tests and diagnosis | Tier 3 review |
+|---|---|---|---|
+| `classic` | Claude leads. One Sonnet builder run implements the Tier 3 plan. | Builder writes named Tier 3 tests. Antigravity takes eligible Gatekeeper jobs. | Antigravity, with the documented Claude fallback. |
+| `agy-build` | Claude designs and checks the diff. Antigravity implements in its build job. | Antigravity's separate rule-test job covers changed rules. The build job writes ordinary tests. | Antigravity reviews the branch after Claude's diff check. |
+| `codex-agy` | Codex designs and implements directly. | Codex writes named Tier 3 tests. Antigravity takes eligible Gatekeeper jobs. | Antigravity reviews. Codex addresses findings. |
+| `codex-solo` | Codex designs and implements directly. | Codex writes tests and diagnoses failures. | Use the solo independent check below. |
+| `claude-solo` | Claude designs and implements directly. | Claude writes tests and diagnoses failures. | Use the solo independent check below. |
+| `agy-solo` | Interactive Antigravity designs and implements directly. | Antigravity writes tests and diagnoses failures. | Use the solo independent check below. |
 
-To balance engineering rigor with token efficiency and speed, tasks follow one of three lifecycle paths based on scope:
+### Switching
 
-```text
-┌────────────────────────────────────────────────────────────────────────┐
-│ TIER 1: EXPRESS LANE (Micro-Tasks & Styling)                           │
-│ Trigger: /fast-track, CSS tweaks, copy updates, icon swaps             │
-│ Flow: Locate & Edit -> Scoped Check (diff/single test) -> Fast Commit  │
-│ Exemption: Bypasses Red-Green TDD, full test suites, & npm run build   │
-└────────────────────────────────────────────────────────────────────────┘
+Use `npm run workflow -- list` to see presets, `npm run workflow -- status` to see the active roles, and `npm run workflow -- <preset>` to set one for the current checkout. The [workflow skill](../../.agents/skills/workflow/SKILL.md) uses the same command. The local selection is Git-ignored. `npm run workflow -- reset` clears it, so the checkout follows `workflow.mode` in the [blueprint](../../project-blueprint.json). The built-in default is `classic` when the blueprint omits a mode.
 
-┌────────────────────────────────────────────────────────────────────────┐
-│ TIER 2: STANDARD LANE (Features & Fixes, any size)                     │
-│ Trigger: Any change that touches no risky surface                      │
-│ Flow: In-chat design -> Build -> npm run verify:agent -> Commit        │
-│ Rule: Gatekeeper writes missing tests; e2e if a user flow changed;     │
-│       no plan document and no review                                   │
-└────────────────────────────────────────────────────────────────────────┘
+If the next role belongs to another agent, open its interactive session in the same checkout. Check the preset at task start, after a switch, and when resuming. Wait for the current command to finish before resuming in another agent. Solo runs in that session with headless jobs and subagents disabled.
 
-┌────────────────────────────────────────────────────────────────────────┐
-│ TIER 3: RISKY SURFACE LANE (Architecture)                              │
-│ Trigger: Schemas, sync, shared domain rules, API contracts, auth,      │
-│          interfaces between apps. The surface sets the tier, not size. │
-│ Flow: Full 5-phase lifecycle (see below)                               │
-└────────────────────────────────────────────────────────────────────────┘
-```
+### Handoff while a task is in progress
 
-### The End-to-End Lifecycle (Tier 3)
+Before changing sessions mid-task, write `.agents/sync/resume.md` with the task's branch, tier, agreed behavior or approved plan, current changes, verification commands and results, known tests or review still owed, and the next step. This local note survives verification, switching, and `npm run sync:reset`. Start the next session on the same branch, read the note and current diff, and honor the recorded approval for the same design. Note the outcome of any remaining item in the resume note. When the task ends, mark the note complete and record the final state in the session handoff. A switch between tasks only needs the preset selection.
 
-Major architectural and multi-step tasks progress through this pipeline:
+## 2. Tiered execution and testing
 
-```text
-1. DESIGN (in chat; superpowers:brainstorming for the questions)
-   ├── Requirements discovery & edge-case mapping
-   └── Agreement on the approach
+- **Tier 1 (Express):** Apply [fast-track](../../.agents/skills/fast-track/SKILL.md) to cosmetic edits and inspect the diff. Tests, full regression, production build, and agent delegation are exempt.
+- **Tier 2 (Standard):** Propose a short design in chat and wait for approval. Implement, verify, and commit. Run configured E2E when a user-facing flow changes. Keep this tier in chat and skip branch review.
+- **Tier 3 (Risky Surface):** Agree on design and tasks in chat (use brainstorming and `superpowers:writing-plans` where available). Name tests per task, receive one approval, and save the approved design unchanged as `docs/specs/YYYY-MM-DD-<name>-plan.md`. The assigned implementer writes the ordinary named tests and implements the plan. Run `npm run verify:agent -- --tier 3`, configured E2E, and the configured build. Get one independent review, evaluate each finding, fix what stands, and verify the fixes. Run `npm run verify:agent -- --full` once on the clean final tip, then `npm run merge -- <branch>` into local `main`. Update the session handoff. Ask before pushing.
 
-2. ONE APPROVAL, IN CHAT (superpowers:writing-plans for the task format)
-   ├── The chat design ends with the task list; each task names its tests
-   ├── The developer's yes is the one approval
-   └── Saved unchanged as docs/specs/YYYY-MM-DD-<name>-plan.md
+Scout only when the task, handoff, plan, and a focused search have not found the files. In paired modes use `npm run scout -- "<task>"` and open the files and ranges it lists. In solo, the interactive agent searches the repository. Keep test logs in the baton and resolve failures from distilled output or the available diagnosis.
 
-3. EXECUTION (one builder run per branch; split only when too large to review)
-   ├── npm run scout -- "<task>" only where the plan does not name the files
-   ├── Sonnet builder writes each task's named tests, then implements it
-   └── One commit per task; the pre-commit hook blocks a failing one
+### Test authorship and verification
 
-4. VERIFICATION & QUALITY GATE (the baton)
-   ├── The plan's tests are already written, so the Gatekeeper is not launched
-   ├── Baton runs the fast suite: npm run verify:agent -- --tier 3
-   ├── A long or browser failure gets a Gatekeeper root-cause note
-   ├── End-to-end suite, once: npm run verify:agent -- --e2e
-   └── The project's build command, when project.verify.build is set
+Every logic change needs covering tests that pass. Use the existing tests if they cover the approved behavior.
 
-5. REVIEW & BRANCH FINISH
-   ├── npm run review, once (Gatekeeper reviews the diff against the plan)
-   ├── Builder re-grades findings, fixes what stands, verifies; no second review
-   └── Merge into local main (standing approval), then rewrite .agents/sync/session.md
-```
+- In solo, the interactive agent writes any new ordinary tests and diagnoses failures. A source change without a test edit is a prompt to check coverage. Such a prompt does not establish that a test is missing.
+- In eligible paired runs, the baton asks Antigravity to write missing tests when source files changed and no test file did. If Gatekeeper is bypassed or unavailable, the interactive agent owns the ordinary missing tests. A failing delegated test may reveal a code or test error. Verify against the approved behavior.
+- `npm run sync:status` reports recorded tests owed and their current owner separately from verification. Resolve the recorded item by confirming its covering test and running a scoped verification for the same source change. A full suite pass alone keeps the recorded follow-up visible.
+- When the implementer owns a new test, use red-green-refactor. Write a minimal failing test, verify that it fails for the expected reason, implement the behavior, verify it passes, and refactor with green tests.
+- Verify through the baton. Use `npm run verify:agent -- --tier 2 --scope <test file>` for a covering file, and `npm run verify:agent -- --tier 3` for the tier-specific fixture or project checks. On feature branches the baton runs configured routes for the change. On the clean final tip `--full` runs the whole suite and records the merge evidence. The hook reuses a matching verification result for the same content.
+- Keep unit and component tests fast. End-to-end tests are for user journeys named in the design and live under `e2e/`. Run them through `npm run verify:agent -- --e2e` when defined for the project. The commit hook skips E2E.
+- `--debug` lets you verify with temporary logging and defer eligible test writing. The next ordinary paired verification attempts the owed tests. `verify.routes`, `risky_paths`, and `no_tests_in` in the blueprint continue to control routing, tier detection, and permitted test locations.
 
----
+### Independent checks
 
-## 2. Test Authorship & TDD Rules
+**Changed-rule tests.** Use the approved rule text and cite its ID. In `classic` and `codex-agy`, use Antigravity's eligible Gatekeeper job or hand off that rule alone to a separate test author when ordinary tests suppress the automatic job. In `agy-build`, the separate rule-test job runs first. In solo, the developer can independently write the test from the rule, or explicitly arrange a separate test author. Resolve the handoff before declaring the change complete.
 
-**Every logic change ships with tests. The Gatekeeper writes them.**
+**Independent review.** In paired mode, run `npm run review` once on the branch and assess its findings. In solo, inspect the diff yourself and then ask the developer to review independently, or explicitly select a paired preset for the review of that same branch. Record the reviewer, reviewed commit, and disposition in the local resume note. Review evidence and full verification are both needed for the Tier 3 workflow. The merge command checks the full-verification note on the final branch tip.
 
-- When `npm run verify:agent` sees changed source files and no changed test file, it launches the Gatekeeper to write the tests, then runs them. A failing Gatekeeper-written test is an ordinary failure: fix the code, or say the test is wrong and fix the test.
-- The Builder writes a test only when the baton reports the Gatekeeper was skipped, or when a plan task supplies the test. In those cases `superpowers:test-driven-development` applies:
-  - **RED:** Write a minimal failing test expressing the desired behavior.
-  - **VERIFY RED:** Run the test to confirm it fails for the expected reason.
-  - **GREEN:** Write the minimal implementation code to pass the test.
-  - **VERIFY GREEN:** Run tests to confirm clean passing output.
-  - **REFACTOR:** Clean up code while keeping tests green.
-- Tests are run by the baton, never directly: `npm run verify:agent -- --tier 2 --scope <test file>` for one file, `-- --tier 3` for the suite.
-- **Fast by default.** Unit and component tests are the norm. An end-to-end test is written only for a user journey named in the spec, lives under `e2e/`, and runs only with `npm run verify:agent -- --e2e`. The commit hook never runs it.
+### Learning mode
+
+When `workflow.learning` is true (the default), keep the learning summary in Tier 2 and Tier 3. Before approval, use up to three lines on the layer touched, the data flow, and one question the developer should be able to answer. After implementation, use up to five lines on the files changed, data flow, one concept with its location, and one line to read in the diff. Explain questions with plain language and a small example. Once a week or on request, offer a small Tier 1 or Tier 2 task for the developer to write and for the agent to review.
 
 ### Web Testing Pyramid
 Web applications in this repository adhere to a three-tier testing pyramid:
@@ -110,7 +83,7 @@ Enforced via `superpowers:systematic-debugging`:
 Before completing a task, opening a PR, or merging into `main`:
 - [ ] **Automated Tests Green:** `npm run verify:agent -- --tier 3` passes. Do not run the suite directly.
 - [ ] **End-to-End Green:** `npm run verify:agent -- --e2e` passes, when the project defines `verify.e2e`.
-- [ ] **Reviewed:** `npm run review` findings are fixed or answered.
+- [ ] **Reviewed:** The selected preset's required independent review is recorded and its findings are fixed or answered.
 - [ ] **Acceptance Criteria Met:** Feature satisfies the rules in its feature doc under [`docs/rules/features/`](../rules/README.md) and every invariant in `docs/rules/invariants.md`.
 - [ ] **The 4 UI States Handled:** Loading (skeletons), Empty, Error, and Success states verified.
 - [ ] **Accessibility & Web Vitals:** Keyboard operable (WCAG 2.1 AA) with zero layout shift regressions (CLS < 0.1).

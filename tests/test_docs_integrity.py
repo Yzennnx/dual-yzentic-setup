@@ -50,6 +50,7 @@ class TestDocsIntegrity(unittest.TestCase):
             self.root / "README.md",
             self.root / "docs" / "PLAN.md",
             self.root / ".agents" / "skills" / "tailor-setup" / "SKILL.md",
+            self.root / ".agents" / "skills" / "workflow" / "SKILL.md",
         ]
         for f in files_to_check:
             self.assertTrue(f.exists(), f"File {f.name} must exist")
@@ -61,6 +62,13 @@ class TestDocsIntegrity(unittest.TestCase):
                     # A link to an archived skill (npm run skill:disable) still resolves, in .agents/skills-archive.
                     archived = Path(str(target).replace(f"{Path('.agents', 'skills')}", f"{Path('.agents', 'skills-archive')}", 1))
                     self.assertTrue(target.exists() or archived.exists(), f"Broken relative link in {f.name}: {url}")
+
+    def test_workflow_guide_documents_presets_and_default(self):
+        guide = (self.docs_ai / "workflows.md").read_text(encoding="utf-8")
+        for preset in ("classic", "agy-build", "codex-agy", "codex-solo", "claude-solo", "agy-solo"):
+            self.assertIn(f"`{preset}`", guide)
+        self.assertIn("built-in default", guide)
+        self.assertIn("independent review", guide)
 
 if __name__ == "__main__":
     unittest.main()

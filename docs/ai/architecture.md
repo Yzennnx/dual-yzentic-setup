@@ -30,7 +30,7 @@ Requirement / Idea
 3. The approved design saved as the plan (`docs/specs/YYYY-MM-DD-<name>-plan.md`)
        │
        ▼
-4. Builder Delivery, Gatekeeper Tests & Verification Gate
+4. Implementation, Tests & Verification Under the Selected Preset
 ```
 
 ---
@@ -45,7 +45,7 @@ Requirement / Idea
 - `docs/specs/`: Approved technical specs and plans.
 - `tests/`: Automated unit and integration test suites. Script tests run against temp fixture repos, never this one.
 - `scripts/`: The baton, the Antigravity launcher, and the scout, review, tailor, and init commands.
-- `.agents/sync/`: `session.md` (committed handoff) plus local, uncommitted baton and Gatekeeper state.
+- `.agents/sync/`: `session.md` (committed handoff), `resume.md` (local task handoff), and local baton and Gatekeeper state.
 - `.claude/`: The `builder` agent and the session and command-guard hooks.
 
 ---

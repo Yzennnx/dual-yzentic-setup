@@ -12,11 +12,11 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { isCosmeticFile, isSourceFile, isTestFile, resolveChangeSet, fingerprintChanges, getUncommittedFiles } from './changes.mjs';
-import { gatekeeperDisabled, shouldWriteTests, writeTests, repairTests, shouldDiagnose, diagnoseFailure, writeHandoff } from './gatekeeper.mjs';
+import { gatekeeperDisabled, shouldWriteTests, writeTests, repairTests, shouldDiagnose, diagnoseFailure, writeHandoff, testDebtLine } from './gatekeeper.mjs';
 import { describeFailure } from './agy.mjs';
 import { checkAll as checkMockups } from './mockups-check.mjs';
 import { checkRules } from './rules-check.mjs';
-import { resolveWorkflow, workflowSummary } from './workflow.mjs';
+import { resolveWorkflow, workflowStatusLines } from './workflow.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -413,8 +413,7 @@ export async function main() {
     console.log('\n=== Baton Sync Status ===');
     if (source === 'last-commit') console.log(CLEAN_TREE_NOTE);
     console.log(`Status:       ${state.status}`);
-    console.log(workflowSummary(workflow));
-    console.log(`Interactive agent: ${workflow.agent}`);
+    console.log(workflowStatusLines(workflow).join('\n'));
     console.log(`Turn Count:   ${state.turn_count} / ${state.max_turns}`);
     console.log(`Detected Tier:${tier} (${tier === 1 ? 'Express' : tier === 2 ? 'Scoped' : 'Architectural'})`);
     console.log(`Modified:     ${modified.length} files`);
@@ -427,7 +426,8 @@ export async function main() {
     const perModel = {};
     for (const d of delegations) if (d.model) perModel[d.model] = (perModel[d.model] ?? 0) + 1;
     if (Object.keys(perModel).length > 0) console.log(`Models:       ${Object.entries(perModel).map(([m, n]) => `${m} x${n}`).join(', ')} (last: ${delegations.at(-1)?.model ?? '?'})`);
-    if ((state.tests_owed ?? []).length > 0) console.log(`Tests owed:   ${state.tests_owed.join(', ')}`);
+    const testDebt = testDebtLine(state, workflow);
+    if (testDebt) console.log(testDebt);
     console.log('=========================\n');
     process.exit(0);
   }
@@ -567,7 +567,7 @@ export async function main() {
       state.files_modified = modified;
       state.verified = status === 'verified' ? { fingerprint: fingerprintChanges(root), command: verifiedCommand } : null;
       saveState();
-      writeHandoff(syncPaths(root).md, { state, tier, files: modified, diagnosis });
+      writeHandoff(syncPaths(root).md, { state, tier, files: modified, diagnosis, workflow });
     };
 
     console.log(`\n[Baton] Verifying changes (Tier ${tier}${tierOverride ? ' - set by --tier' : ' - auto-detected'})...`);
@@ -626,6 +626,7 @@ export async function main() {
         process.exit(1);
       }
       if (outcome.result === 'skipped') {
+        state.tests_owed = [...new Set([...owed, ...modified.filter(isSourceFile)])];
         console.log(`[Baton] Gatekeeper skipped (${describeFailure(outcome.reason, outcome.detail)}): tests for this change are still owed.`);
       } else if (outcome.testsWritten.length > 0) {
         console.log(`[Baton] Gatekeeper wrote: ${outcome.testsWritten.join(', ')}`);
@@ -688,6 +689,10 @@ export async function main() {
 
     if (testSuccess) {
       state.turn_count = 0; // reset turn count on success
+      // An explicit scope identifies an existing test that covers the current change.
+      if (!full && !isExpress && scopeOverride && isTestFile(scopeOverride.replaceAll('\\', '/')) && existsSync(resolve(root, scopeOverride))) {
+        state.tests_owed = (state.tests_owed ?? []).filter(path => !modified.includes(path));
+      }
       settle('verified');
       if (full) console.log(recordFullVerify(root, verifiedCommand));
 

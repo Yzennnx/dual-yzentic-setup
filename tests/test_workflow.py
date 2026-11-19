@@ -49,6 +49,8 @@ class TestWorkflow(unittest.TestCase):
     def test_invalid_mode_and_malformed_preference(self):
         self.blueprint("invalid")
         self.assertIn("project-blueprint.json", self.workflow("status", ok=False))
+        self.assertIn("project-blueprint.json", self.workflow("codex-solo", ok=False))
+        self.assertFalse(self.preference.exists())
         self.blueprint("classic")
         self.workflow("agy-solo")
         before = self.preference.read_bytes()
@@ -74,3 +76,13 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertEqual(handoff.read_text(), "keep this handoff")
         self.assertEqual((self.root / "AGENTS.md").read_text(), "keep these rules")
+
+    def test_switch_and_reset_preserve_mid_task_handoff(self):
+        self.blueprint("classic")
+        resume = self.root / ".agents" / "sync" / "resume.md"
+        resume.parent.mkdir(parents=True)
+        resume.write_text("Approved Tier 2 fix. Regression test still owed.\n", encoding="utf-8")
+        self.workflow("codex-solo")
+        self.assertIn("Tests and diagnosis: Codex", self.workflow("status"))
+        self.workflow("reset")
+        self.assertEqual(resume.read_text(encoding="utf-8"), "Approved Tier 2 fix. Regression test still owed.\n")

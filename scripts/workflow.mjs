@@ -37,11 +37,15 @@ function validateMode(mode, source) {
   }
 }
 
-export function resolveWorkflow(root) {
-  const local = readConfig(root, LOCAL);
-  if (local) validateMode(local.mode, LOCAL);
+function readBlueprintMode(root) {
   const defaultMode = readConfig(root, BLUEPRINT)?.workflow?.mode;
   if (defaultMode !== undefined) validateMode(defaultMode, BLUEPRINT);
+  return defaultMode;
+}
+
+export function resolveWorkflow(root, defaultMode = readBlueprintMode(root)) {
+  const local = readConfig(root, LOCAL);
+  if (local) validateMode(local.mode, LOCAL);
   const mode = local?.mode ?? defaultMode ?? 'classic';
   const source = local ? 'local override' : defaultMode ? 'blueprint default' : 'built-in default';
   return { ...PRESETS[mode], mode, source, defaultMode: defaultMode ?? 'classic' };
@@ -55,22 +59,20 @@ export function soloJobMessage(workflow, job) {
   return `[${job}] ${workflow.mode} disables headless ${job.toLowerCase()}. Continue with ${workflow.agent} in the interactive session.`;
 }
 
-function status(workflow) {
+export function workflowStatusLines(workflow) {
   const { agent, solo, mode, source, defaultMode, implementation, buildsWithAgy } = workflow;
-  console.log(workflowSummary(workflow));
-  if (source === 'local override') console.log(`Default: ${defaultMode}`);
-  console.log(`Interactive agent: ${agent}`);
-  console.log(`Implementation: ${implementation}`);
+  const lines = [workflowSummary(workflow)];
+  if (source === 'local override') lines.push(`Default: ${defaultMode}`);
+  lines.push(`Interactive agent: ${agent}`, `Implementation: ${implementation}`);
   if (solo) {
-    console.log(`Tests and diagnosis: ${agent}`);
-    console.log('Tier 3 review: developer or explicitly selected paired workflow');
-    console.log('Headless agent launches: disabled');
+    lines.push(`Tests and diagnosis: ${agent}`, 'Tier 3 review: developer or explicitly selected paired workflow', 'Headless agent launches: disabled');
   } else {
-    console.log(buildsWithAgy
+    lines.push(buildsWithAgy
       ? 'Tests: Antigravity build and rule-test jobs'
       : `Tests: Antigravity for eligible Gatekeeper work; ${mode === 'classic' ? 'Claude builder' : agent} for named Tier 3 tests`);
-    console.log('Eligible diagnosis, scouting, and Tier 3 review: Antigravity');
+    lines.push('Eligible diagnosis, scouting, and Tier 3 review: Antigravity');
   }
+  return lines;
 }
 
 function writePreference(file, mode) {
@@ -91,6 +93,7 @@ function main(args, root) {
     console.log(Object.keys(PRESETS).join('\n'));
     return;
   }
+  const defaultMode = readBlueprintMode(root);
   const local = resolve(root, LOCAL);
   if (command === 'reset') {
     rmSync(local, { force: true });
@@ -98,7 +101,7 @@ function main(args, root) {
     validateMode(command, 'command arguments');
     writePreference(local, command);
   }
-  status(resolveWorkflow(root));
+  console.log(workflowStatusLines(resolveWorkflow(root, defaultMode)).join('\n'));
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

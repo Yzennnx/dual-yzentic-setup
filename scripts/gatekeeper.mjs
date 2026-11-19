@@ -214,10 +214,19 @@ export function diagnoseFailure({ root, state, output, saveState = () => {} }) {
   return { note: launch.response.trim(), outOfScope };
 }
 
+export function testDebtLine(state, workflow) {
+  const owed = state.tests_owed ?? [];
+  if (owed.length === 0) return null;
+  const interactiveOwnsTests = workflow?.solo || state.gatekeeper?.result === 'skipped';
+  const pairedOwner = workflow?.buildsWithAgy ? 'Antigravity build job' : 'Antigravity (Gatekeeper)';
+  const owner = interactiveOwnsTests ? workflow?.agent ?? state.active_agent : pairedOwner;
+  return `Tests owed:   ${owed.join(', ')} (owner: ${owner})`;
+}
+
 /**
  * The handoff ticket for the last verify, as Markdown.
  */
-export function renderHandoff({ state, tier, files, diagnosis = null }) {
+export function renderHandoff({ state, tier, files, diagnosis = null, workflow }) {
   const written = state.gatekeeper?.tests_written ?? [];
   const outOfScope = state.gatekeeper?.out_of_scope ?? [];
   const report = [];
@@ -235,6 +244,8 @@ export function renderHandoff({ state, tier, files, diagnosis = null }) {
   if (state.gatekeeper?.result === 'skipped') {
     report.push('', 'Gatekeeper skipped: tests for this change are still owed.');
   }
+  const testDebt = testDebtLine(state, workflow);
+  if (testDebt) report.push('', testDebt);
 
   report.push('', `E2E: ${{ passed: 'passed', failed: 'failed' }[state.e2e] ?? 'not run'}`);
 
@@ -244,10 +255,10 @@ export function renderHandoff({ state, tier, files, diagnosis = null }) {
     `- Status: ${state.status}`,
     `- Tier: ${tier}`,
     '',
-    '## Changes Implemented by Claude',
+    '## Changes',
     ...(files.length > 0 ? files.map(path => `- ${path}`) : ['- (none)']),
     '',
-    '## Verification Report by Antigravity',
+    '## Verification Report',
     ...report,
     ''
   ].join('\n');

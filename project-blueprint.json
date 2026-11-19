@@ -32,6 +32,13 @@
     "routes": [
       {
         "paths": [
+          "scripts/workflow.mjs",
+          "tests/test_workflow.py"
+        ],
+        "command": "python3 tests/run_parallel.py tests test_workflow.py"
+      },
+      {
+        "paths": [
           "scripts/mockups-check",
           "scripts/rules-check",
           "scripts/rules-map",
@@ -54,7 +61,9 @@
           "tests/stubs/",
           "tests/repo_fixture",
           "tests/test_gatekeeper",
-          "tests/test_baton"
+          "tests/test_baton",
+          "tests/test_e2e_baton_flow",
+          "tests/test_sync_schema"
         ],
         "command": "python3 tests/run_parallel.py tests test_baton_*.py test_gatekeeper.py test_changes.py test_e2e_*.py test_sync_schema.py test_verify_lock.py test_hooks.py test_claude_hooks.py test_agy_launcher.py"
       },

@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests.repo_fixture import VALID_PROJECT, make_repo, run_node
+from tests.repo_fixture import REPO_ROOT, VALID_PROJECT, make_repo, run_node
 
 V = {"test": "pnpm test", "test_scoped": "pnpm vitest run {scope}"}
 
@@ -11,7 +11,7 @@ V = {"test": "pnpm test", "test_scoped": "pnpm vitest run {scope}"}
 class TestBatonVerifyConfig(unittest.TestCase):
     def node_json(self, expression):
         code = f"""
-        import {{ resolveTestExecution, readVerifyConfig }} from './scripts/baton.mjs';
+        import {{ resolveTestExecution, readVerifyConfig, planRoutes }} from './scripts/baton.mjs';
         console.log(JSON.stringify({expression}));
         """
         res = run_node(code)
@@ -60,6 +60,15 @@ class TestBatonVerifyConfig(unittest.TestCase):
         project = dict(VALID_PROJECT, verify={"test": ""})
         empty = make_repo(base / "c", project=project, status="initialized") / "project-blueprint.json"
         self.assertIsNone(self.read(empty))
+
+    def test_workflow_routes_run_workflow_tests_in_template(self):
+        blueprint = json.dumps(str(REPO_ROOT / "project-blueprint.json"))
+        for name in ("scripts/workflow.mjs", "tests/test_workflow.py"):
+            with self.subTest(name=name):
+                self.assertEqual(
+                    self.node_json(f"planRoutes([{json.dumps(name)}], readVerifyConfig({blueprint}), {{fast: true}})"),
+                    ["python3 tests/run_parallel.py tests test_workflow.py"],
+                )
 
 
 if __name__ == "__main__":

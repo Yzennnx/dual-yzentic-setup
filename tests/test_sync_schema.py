@@ -43,7 +43,7 @@ class TestSyncSchema(unittest.TestCase):
         for key in REQUIRED_KEYS:
             self.assertIn(key, data, f"Missing key '{key}' in handoff.json")
         self.assertIn(data["status"], ALLOWED_STATUSES)
-        self.assertIn(data["active_agent"], ["claude", "antigravity"])
+        self.assertIn(data["active_agent"], ["claude", "antigravity", "codex"])
         self.assertIsInstance(data["turn_count"], int)
         self.assertIsInstance(data["max_turns"], int)
         self.assertIsInstance(data["files_modified"], list)
@@ -71,6 +71,18 @@ class TestSyncSchema(unittest.TestCase):
         self.assertNotIn("handoff.json", tracked)
         status = subprocess.run(["git", "status", "--porcelain"], cwd=self.fixture, capture_output=True, text=True).stdout
         self.assertEqual(status.strip(), "", "baton state must not dirty the tree")
+
+    def test_reset_only_resets_baton_state_in_solo(self):
+        resume = self.json_path.with_name("resume.md")
+        local = self.fixture / ".agents" / "workflow.local.json"
+        resume.write_text("Keep the approved design\n", encoding="utf-8")
+        local.write_text('{"mode":"codex-solo"}', encoding="utf-8")
+        self.baton("verify", "--tier", "1")
+        self.assertEqual(self.read_state()["active_agent"], "codex")
+        self.baton("reset")
+        self.assertEqual(self.read_state()["status"], "idle")
+        self.assertEqual(resume.read_text(encoding="utf-8"), "Keep the approved design\n")
+        self.assertEqual(json.loads(local.read_text(encoding="utf-8"))["mode"], "codex-solo")
 
 
 if __name__ == "__main__":

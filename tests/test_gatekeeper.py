@@ -22,8 +22,8 @@ FAIL = "node -e \"console.error('boom: expected 1 got 2'); process.exit(1)\""
 NEEDS_GENERATED = "node -e \"process.exit(process.getBuiltinModule('fs').existsSync('tests/generated.test.js') ? 0 : 1)\""
 DIAGNOSIS_HEADING = "--- Gatekeeper Diagnosis ---"
 EXCERPT_HEADING = "Distilled Failure Diagnostic"
-CHANGES_HEADING = "## Changes Implemented by Claude"
-REPORT_HEADING = "## Verification Report by Antigravity"
+CHANGES_HEADING = "## Changes"
+REPORT_HEADING = "## Verification Report"
 
 # A stand-in for agy that records the active_agent it sees in handoff.json while it runs.
 PROBE = """

@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..');
 
-export const ALWAYS_KEPT_SKILLS = ['tailor-setup', 'fast-track', 'wayfinder'];
+export const ALWAYS_KEPT_SKILLS = ['tailor-setup', 'fast-track', 'wayfinder', 'workflow'];
 
 const PRIORITIES = ['P0', 'P1', 'P2'];
 const SKILL_NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;

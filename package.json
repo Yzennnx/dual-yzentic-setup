@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "verify:agent": "node scripts/baton.mjs verify",
+    "workflow": "node scripts/workflow.mjs",
     "sync:status": "node scripts/baton.mjs status",
     "sync:reset": "node scripts/baton.mjs reset",
     "skill:list": "node scripts/skills-manager.mjs list",

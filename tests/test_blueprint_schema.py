@@ -26,5 +26,9 @@ class TestBlueprintSchema(unittest.TestCase):
         self.assertNotIn("team", data["project"])
         self.assertIsInstance(data["project"]["developer"], str)
 
+    def test_default_workflow_remains_classic(self):
+        data = json.loads(self.blueprint_file.read_text(encoding="utf-8"))
+        self.assertEqual(data["workflow"]["mode"], "classic")
+
 if __name__ == "__main__":
     unittest.main()

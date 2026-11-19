@@ -29,6 +29,8 @@ build/
 !.agents/skills/_staging/.gitkeep
 
 # Baton sync state (per-machine; session.md stays tracked)
+.agents/workflow.local.json
+.agents/workflow.local.json.*.tmp
 .agents/sync/*
 !.agents/sync/session.md
 !.agents/sync/.gitkeep

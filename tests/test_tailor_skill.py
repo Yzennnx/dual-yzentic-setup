@@ -1,6 +1,7 @@
 import re
 import unittest
 from pathlib import Path
+from tests.repo_fixture import run_node
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -49,6 +50,11 @@ class TestTailorSkill(unittest.TestCase):
         self.assertIn("tailor-setup", handbook)
         agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("npm run tailor", agents)
+
+    def test_tailoring_keeps_workflow_skill(self):
+        result = run_node("import { ALWAYS_KEPT_SKILLS } from './scripts/tailor.mjs'; console.log(ALWAYS_KEPT_SKILLS.join(' '));")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("workflow", result.stdout.split())
 
 
 if __name__ == "__main__":

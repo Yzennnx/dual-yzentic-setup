@@ -68,4 +68,20 @@ describe('checkAll', () => {
     assert.match(problems[0], /^old\.md: no mockup map/);
     assert.deepEqual(checkAll(root, ['docs/design/mockups/other/z.html']).problems, []);
   });
+
+  it('checks an active spec map and leaves archived fingerprints as history', () => {
+    const stale = design('| pc/a.html | T.1 | Start | 00000000 |\n| pc/b.css | T.1 | skip: x | |');
+    put('docs/specs/active/active-plan.md', stale);
+    const archived = put('docs/specs/archive/completed-plan.md', stale);
+    const { problems } = checkAll(root, ['docs/design/mockups/pc/a.html']);
+    assert.equal(problems.length, 1);
+    assert.match(problems[0], /^docs\/specs\/active\/active-plan\.md: stale:/);
+    assert.equal(checkDesign(archived, root).problems.length, 1);
+  });
+
+  it('reports a missing map in an active spec when its linked mockup changes', () => {
+    put('docs/specs/active/unmapped-plan.md', '# Spec\n[m](../../design/mockups/pc/README.md)\n');
+    const { problems } = checkAll(root, ['docs/design/mockups/pc/a.html']);
+    assert.match(problems[0], /^docs\/specs\/active\/unmapped-plan\.md: no mockup map/);
+  });
 });

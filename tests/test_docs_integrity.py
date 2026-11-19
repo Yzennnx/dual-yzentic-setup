@@ -53,6 +53,8 @@ class TestDocsIntegrity(unittest.TestCase):
             self.assertNotIn("](file://", content, f"Absolute file:// link in {name}")
 
     def test_markdown_links_are_valid(self):
+        specs = self.root / "docs" / "specs"
+        archive = specs / "archive"
         files_to_check = [
             self.root / "AGENTS.md",
             self.root / "CLAUDE.md",
@@ -65,7 +67,9 @@ class TestDocsIntegrity(unittest.TestCase):
             self.root / "docs" / "rules" / "architecture.md",
             self.root / "README.md",
             self.root / "docs" / "PLAN.md",
-            self.root / "docs" / "specs" / "README.md",
+            specs / "README.md",
+            *(specs / "active").glob("*.md"),
+            *archive.glob("*.md"),
             self.root / ".agents" / "skills" / "tailor-setup" / "SKILL.md",
             self.root / ".agents" / "skills" / "workflow" / "SKILL.md",
         ]
@@ -77,6 +81,9 @@ class TestDocsIntegrity(unittest.TestCase):
             for text, url in links:
                 if not url.startswith(("http://", "https://", "#", "mailto:")):
                     target = (f.parent / url.split("#")[0]).resolve()
+                    # Historical specs can link to tooling removed since they were written.
+                    if archive in f.parents and target != specs and specs not in target.parents:
+                        continue
                     # A link to an archived skill (npm run skill:disable) still resolves, in .agents/skills-archive.
                     archived = Path(str(target).replace(f"{Path('.agents', 'skills')}", f"{Path('.agents', 'skills-archive')}", 1))
                     self.assertTrue(target.exists() or archived.exists(), f"Broken relative link in {f.name}: {url}")

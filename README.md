@@ -195,4 +195,4 @@ One review of a smaller branch ran for 590 seconds and returned nothing. `npm ru
 - Chain up to 3 Tier 1/2 tasks in one area per session, with their designs approved together; Tier 3 gets its own session. The handoff file makes a fresh session cheap.
 - Use `/caveman` for terse replies and `/ponytail` for the smallest workable change.
 - General skills (`caveman`, `ponytail`, `impeccable`, …) are installed once per machine, not per repo: [`global-skills.json`](global-skills.json) lists them, `npm run skills:global` checks both agents can see them, and `-- --install` copies missing ones from `~/skill-library`. The session start warns when one is missing.
-- Keep Tier 1 and Tier 2 work out of the spec-and-plan process.
+- Keep Tier 1 and routine Tier 2 fixes lightweight. Use a short linked spec for a new Tier 2 feature or meaningful behavior change.

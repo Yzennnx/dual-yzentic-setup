@@ -5,7 +5,7 @@
  * linked mockup folders and that no mapped file changed since its fingerprint was recorded.
  *
  *   node scripts/mockups-check.mjs docs/design/x.md   one design
- *   node scripts/mockups-check.mjs                    every docs/design/*.md that has a map
+ *   node scripts/mockups-check.mjs                    check designs and active specs
  */
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
@@ -112,23 +112,26 @@ export function checkDesign(designPath, root = REPO_ROOT) {
 }
 
 /**
- * Check every docs/design/*.md. Designs with a map report their problems. Designs that link mockups
+ * Check designs and active specs. Designs with a map report their problems. Designs that link mockups
  * but have no map go to `noMap`; with `changed` (repo-relative paths), those whose folders hold a
  * changed mockup also become problems.
  */
 export function checkAll(root = REPO_ROOT, changed = null) {
-  const dir = resolve(root, 'docs/design');
   const problems = [];
   const noMap = [];
-  if (!existsSync(dir)) return { problems, noMap };
-  for (const name of readdirSync(dir).filter(n => n.endsWith('.md')).sort()) {
-    const result = checkDesign(resolve(dir, name), root);
-    if (result.hasMap) {
-      problems.push(...result.problems.map(p => `${name}: ${p}`));
-    } else if (result.folders.length > 0) {
-      noMap.push(name);
-      const touched = (changed ?? []).filter(f => result.files.some(m => `${MOCKUPS}/${m}` === f.replace(/\\/g, '/')));
-      if (touched.length > 0) problems.push(`${name}: no mockup map, but it links changed mockups (${touched.join(', ')})`);
+  for (const folder of ['docs/design', 'docs/specs/active']) {
+    const dir = resolve(root, folder);
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir).filter(n => n.endsWith('.md')).sort()) {
+      const label = folder === 'docs/design' ? name : `${folder}/${name}`;
+      const result = checkDesign(resolve(dir, name), root);
+      if (result.hasMap) {
+        problems.push(...result.problems.map(p => `${label}: ${p}`));
+      } else if (result.folders.length > 0) {
+        noMap.push(label);
+        const touched = (changed ?? []).filter(f => result.files.some(m => `${MOCKUPS}/${m}` === f.replace(/\\/g, '/')));
+        if (touched.length > 0) problems.push(`${label}: no mockup map, but it links changed mockups (${touched.join(', ')})`);
+      }
     }
   }
   return { problems, noMap };

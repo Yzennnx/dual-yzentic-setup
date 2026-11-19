@@ -69,10 +69,11 @@ Active milestone: **Workflow setup complete; waiting for a project to start**
   - **Status:** Done
   - **Description:** Add checkout-local solo and paired presets, shared role resolution, and handoff guidance. Plan: [`2026-11-19-workflow-switcher-plan.md`](specs/archive/2026-11-19-workflow-switcher-plan.md).
 
-- [ ] **Task 0.8: Active and Archived Specs**
+- [x] **Task 0.8: Active and Archived Specs**
   - **Priority:** P0
-  - **Status:** In progress
-  - **Description:** Link approved feature tasks to specs, organize active and archived documents, and select the matching spec for review. Spec: [Active and archived specs](specs/active/2026-11-19-spec-lifecycle-plan.md).
+  - **Status:** Done
+  - **Description:** Link approved feature tasks to specs, organize active and archived documents, and select the matching spec for review.
+  - **Spec:** [Active and archived specs](specs/archive/2026-11-19-spec-lifecycle-plan.md)
 
 - [ ] **Task 1.1: Core Application Shell & Navigation**
   - **Priority:** P0

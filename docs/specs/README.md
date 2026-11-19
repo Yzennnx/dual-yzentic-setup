@@ -38,4 +38,6 @@ Review can select the sole active spec added or changed by the branch. Pass `--p
 
 Once the final linked task is verified and closed, move the spec into `archive/` with its filename intact. Update every roadmap link in the same commit and keep the heading anchors. If any linked task remains open, keep the spec in `active/`.
 
+Automatic mockup checks include active specs. Archived specs retain the fingerprints from their approval and implementation. Pass the archived path to `npm run mockups:check -- <spec-path>` to check one explicitly.
+
 For Tier 3, archive after addressing review findings and before full verification of the final branch tip. Wayfinder ticket maps keep the `archive/wayfinder-<date>/` convention.

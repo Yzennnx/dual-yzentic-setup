@@ -28,7 +28,8 @@ const REPO_ROOT = resolve(__dirname, '..');
 export function syncPaths(root = REPO_ROOT) {
   return {
     json: resolve(root, '.agents/sync/handoff.json'),
-    md: resolve(root, '.agents/sync/handoff.md')
+    md: resolve(root, '.agents/sync/handoff.md'),
+    e2e: resolve(root, '.agents/sync/e2e-state.json')
   };
 }
 
@@ -174,6 +175,105 @@ export function readRiskyPaths(blueprintPath = BLUEPRINT_PATH) {
   } catch {
     return null;
   }
+}
+
+export const DEFAULT_E2E_STATE = {
+  merges_since_full_e2e: 0,
+  tier3_since_full_e2e: 0,
+  blast_radius_pending: false
+};
+
+export function readE2eState(filePath = syncPaths().e2e) {
+  try {
+    if (!existsSync(filePath)) return { ...DEFAULT_E2E_STATE };
+    const parsed = JSON.parse(readFileSync(filePath, 'utf-8'));
+    return {
+      merges_since_full_e2e: Number.isInteger(parsed?.merges_since_full_e2e) ? parsed.merges_since_full_e2e : 0,
+      tier3_since_full_e2e: Number.isInteger(parsed?.tier3_since_full_e2e) ? parsed.tier3_since_full_e2e : 0,
+      blast_radius_pending: Boolean(parsed?.blast_radius_pending)
+    };
+  } catch {
+    return { ...DEFAULT_E2E_STATE };
+  }
+}
+
+export function writeE2eState(e2eState, filePath = syncPaths().e2e) {
+  mkdirSync(dirname(filePath), { recursive: true });
+  writeFileSync(filePath, JSON.stringify(e2eState, null, 2) + '\n', 'utf-8');
+}
+
+/**
+ * Resolve E2E blast-radius prefixes from `project.verify.e2e_blast_radius` or fall back to `project.risky_paths`.
+ */
+export function readE2eBlastRadius(blueprintPath = BLUEPRINT_PATH) {
+  try {
+    const blueprint = JSON.parse(readFileSync(blueprintPath, 'utf-8'));
+    const verify = blueprint.status === 'initialized' ? blueprint.project?.verify : blueprint.template_verify;
+    const configured = verify?.e2e_blast_radius;
+    if (Array.isArray(configured) && configured.length > 0) {
+      return configured.filter(p => typeof p === 'string' && p.trim().length > 0);
+    }
+  } catch {
+    // Fall through to risky paths
+  }
+  return readRiskyPaths(blueprintPath);
+}
+
+/**
+ * Determine the E2E command to run for `--e2e` and/or `--e2e-scope`.
+ */
+export function resolveE2eExecution(e2eScope, verify = null) {
+  if (e2eScope) {
+    if (typeof verify?.e2e_scoped === 'string' && verify.e2e_scoped.trim().length > 0) {
+      return { command: verify.e2e_scoped.split('{scope}').join(e2eScope), scoped: true, error: null };
+    }
+    return { command: null, scoped: true, error: '[Baton] No scoped e2e command configured (project.verify.e2e_scoped).' };
+  }
+  if (typeof verify?.e2e === 'string' && verify.e2e.trim().length > 0) {
+    return { command: verify.e2e, scoped: false, error: null };
+  }
+  return { command: null, scoped: false, error: '[Baton] No e2e command configured (project.verify.e2e).' };
+}
+
+export function e2eTriggerReasons(e2eState) {
+  const reasons = [];
+  if (e2eState?.blast_radius_pending) reasons.push('blast-radius path merged');
+  if ((e2eState?.tier3_since_full_e2e ?? 0) >= 3) reasons.push(`${e2eState.tier3_since_full_e2e} Tier 3 merges since full E2E`);
+  if ((e2eState?.merges_since_full_e2e ?? 0) >= 5) reasons.push(`${e2eState.merges_since_full_e2e} merges since full E2E`);
+  return reasons;
+}
+
+function hasOpenFullE2eTask(root) {
+  const planPath = resolve(root, 'docs/PLAN.md');
+  if (!existsSync(planPath)) return false;
+  return /^- \[ \] (?:\*\*)?Task: Full E2E verification/m.test(readFileSync(planPath, 'utf-8'));
+}
+
+export function formatFullE2eNotice(root, e2eState) {
+  const reasons = e2eTriggerReasons(e2eState);
+  if (reasons.length === 0) return null;
+  if (hasOpenFullE2eTask(root)) {
+    return `[Baton] Full E2E due (${reasons.join('; ')}): already logged in docs/PLAN.md.`;
+  }
+  return `[Baton] Full E2E due (${reasons.join('; ')}). Log "- [ ] **Task: Full E2E verification**" in docs/PLAN.md.`;
+}
+
+export function recordE2eMerge(root, mergedFiles, blueprintPath = resolve(root, 'project-blueprint.json')) {
+  const e2ePath = syncPaths(root).e2e;
+  const current = readE2eState(e2ePath);
+  const riskyPaths = readRiskyPaths(blueprintPath);
+  const blastPaths = readE2eBlastRadius(blueprintPath);
+  const tier = detectExecutionTier(mergedFiles, riskyPaths);
+  const hitBlast = Array.isArray(blastPaths) && blastPaths.length > 0
+    ? mergedFiles.some(file => underAny(file, blastPaths))
+    : tier === 3;
+  const next = {
+    merges_since_full_e2e: current.merges_since_full_e2e + 1,
+    tier3_since_full_e2e: current.tier3_since_full_e2e + (tier === 3 ? 1 : 0),
+    blast_radius_pending: current.blast_radius_pending || hitBlast
+  };
+  writeE2eState(next, e2ePath);
+  return next;
 }
 
 /**
@@ -428,6 +528,13 @@ export async function main() {
     if (Object.keys(perModel).length > 0) console.log(`Models:       ${Object.entries(perModel).map(([m, n]) => `${m} x${n}`).join(', ')} (last: ${delegations.at(-1)?.model ?? '?'})`);
     const testDebt = testDebtLine(state, workflow);
     if (testDebt) console.log(testDebt);
+    const verifyConfig = readVerifyConfig(resolve(root, 'project-blueprint.json'));
+    if (verifyConfig?.e2e) {
+      const e2eState = readE2eState(syncPaths(root).e2e);
+      console.log(`E2E Drift:    ${e2eState.merges_since_full_e2e} merges, ${e2eState.tier3_since_full_e2e} Tier 3, blast=${e2eState.blast_radius_pending}`);
+      const e2eNotice = formatFullE2eNotice(root, e2eState);
+      if (e2eNotice) console.log(e2eNotice);
+    }
     console.log('=========================\n');
     process.exit(0);
   }
@@ -450,11 +557,24 @@ export async function main() {
       console.error(`[Baton] ${branch} has no full verify on its tip (${tip.slice(0, 7)}). In its checkout: npm run verify:agent -- --full`);
       process.exit(1);
     }
+    const mergedFiles = (() => {
+      try {
+        return gitOut(root, `diff --name-only HEAD...${branch}`).split('\n').filter(Boolean);
+      } catch {
+        return [];
+      }
+    })();
     try {
       execSync(`git merge --ff-only ${branch}`, { cwd: root, stdio: 'inherit' });
     } catch {
       console.error(`[Baton] ${branch} does not fast-forward: rebase it on the current branch and run the full verify again.`);
       process.exit(1);
+    }
+    const verifyConfig = readVerifyConfig(resolve(root, 'project-blueprint.json'));
+    if (verifyConfig?.e2e) {
+      const e2eState = recordE2eMerge(root, mergedFiles);
+      const notice = formatFullE2eNotice(root, e2eState);
+      if (notice) console.log(notice);
     }
     process.exit(0);
   }
@@ -468,9 +588,19 @@ export async function main() {
   if (command === 'verify') {
     const workflow = resolveWorkflow(root);
     const verifyConfig = readVerifyConfig(resolve(root, 'project-blueprint.json'));
-    const wantE2e = args.includes('--e2e') || process.env.npm_config_e2e === 'true';
-    if (wantE2e && !verifyConfig?.e2e) {
-      console.error('[Baton] No e2e command configured (project.verify.e2e).');
+    let e2eScopeOverride = null;
+    for (let i = 1; i < args.length; i++) {
+      if (args[i] === '--e2e-scope' && args[i + 1]) {
+        e2eScopeOverride = args[i + 1];
+      }
+    }
+    if (!e2eScopeOverride && process.env.npm_config_e2e_scope) {
+      e2eScopeOverride = process.env.npm_config_e2e_scope;
+    }
+    const wantE2e = args.includes('--e2e') || process.env.npm_config_e2e === 'true' || Boolean(e2eScopeOverride);
+    const e2eExec = wantE2e ? resolveE2eExecution(e2eScopeOverride, verifyConfig) : null;
+    if (wantE2e && e2eExec.error) {
+      console.error(e2eExec.error);
       process.exit(1);
     }
 
@@ -696,10 +826,11 @@ export async function main() {
       }
     }
     if (testSuccess && wantE2e) {
-      console.log(`[Baton] Executing e2e command: ${verifyConfig.e2e}`);
-      ({ success: testSuccess, output: testOutput } = runCommand(verifyConfig.e2e));
+      console.log(`[Baton] Executing e2e command: ${e2eExec.command}`);
+      ({ success: testSuccess, output: testOutput } = runCommand(e2eExec.command));
       state.e2e = testSuccess ? 'passed' : 'failed';
-      if (!testSuccess) failedCommand = verifyConfig.e2e;
+      if (!testSuccess) failedCommand = e2eExec.command;
+      else if (!e2eExec.scoped) writeE2eState({ ...DEFAULT_E2E_STATE }, syncPaths(root).e2e);
     }
 
     if (testSuccess) {

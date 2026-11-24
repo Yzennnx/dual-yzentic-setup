@@ -70,6 +70,26 @@ class TestBatonVerifyConfig(unittest.TestCase):
                     ["python3 tests/run_parallel.py tests test_workflow.py"],
                 )
 
+    def test_resolve_e2e_execution(self):
+        code = """
+        import { resolveE2eExecution } from './scripts/baton.mjs';
+        console.log(JSON.stringify({
+          full: resolveE2eExecution(null, { test: 't', e2e: 'npx playwright test' }),
+          scoped: resolveE2eExecution('e2e/login.e2e.ts', { test: 't', e2e: 'npx playwright test', e2e_scoped: 'npx playwright test {scope}' }),
+          missingScoped: resolveE2eExecution('e2e/login.e2e.ts', { test: 't', e2e: 'npx playwright test' }),
+          missingFull: resolveE2eExecution(null, { test: 't' })
+        }));
+        """
+        res = run_node(code)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        data = json.loads(res.stdout)
+        self.assertEqual(data["full"], {"command": "npx playwright test", "scoped": False, "error": None})
+        self.assertEqual(data["scoped"], {"command": "npx playwright test e2e/login.e2e.ts", "scoped": True, "error": None})
+        self.assertIsNone(data["missingScoped"]["command"])
+        self.assertIn("e2e_scoped", data["missingScoped"]["error"])
+        self.assertIsNone(data["missingFull"]["command"])
+        self.assertIn("project.verify.e2e", data["missingFull"]["error"])
+
 
 if __name__ == "__main__":
     unittest.main()

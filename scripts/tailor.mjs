@@ -101,6 +101,16 @@ export function validateManifest(blueprint, { root = REPO_ROOT } = {}) {
   const e2e = project.verify?.e2e;
   if (e2e !== undefined && !isText(e2e)) add('project.verify.e2e', 'must be a non-empty command');
 
+  const e2eScoped = project.verify?.e2e_scoped;
+  if (e2eScoped !== undefined && (!isText(e2eScoped) || !e2eScoped.includes('{scope}'))) {
+    add('project.verify.e2e_scoped', 'must be a command containing {scope}');
+  }
+
+  const e2eBlastRadius = project.verify?.e2e_blast_radius;
+  if (e2eBlastRadius !== undefined && (!Array.isArray(e2eBlastRadius) || !e2eBlastRadius.every(isText))) {
+    add('project.verify.e2e_blast_radius', 'must be an array of non-empty path strings');
+  }
+
   if (!Array.isArray(project.roadmap) || project.roadmap.length === 0) {
     add('project.roadmap', 'must contain at least one task');
   } else {

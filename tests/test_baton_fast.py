@@ -1,3 +1,4 @@
+import json
 import subprocess
 import unittest
 from pathlib import Path
@@ -85,6 +86,61 @@ class TestBatonFast(unittest.TestCase):
         res = self.merge(root, "feat/x")
         self.assertEqual(res.returncode, 0, res.stderr)
         self.assertEqual(git_out(root, "rev-parse", "HEAD"), git_out(root, "rev-parse", "feat/x"))
+
+    def test_e2e_scope_and_merge_trigger_tracking(self):
+        root = self.make_fixture(
+            test_command=appender("T"),
+            changes={"src/ui.js": "1;\n"},
+            verify={
+                "test_scoped": appender("U") + " {scope}",
+                "e2e": appender("E"),
+                "e2e_scoped": appender("S") + " {scope}",
+                "e2e_blast_radius": ["prisma/"],
+            },
+        )
+        # Seed e2e-state.json with 2 merges and verify --e2e-scope + --scope does not reset it
+        e2e_state_path = root / ".agents" / "sync" / "e2e-state.json"
+        e2e_state_path.write_text(
+            json.dumps({"merges_since_full_e2e": 2, "tier3_since_full_e2e": 0, "blast_radius_pending": False}),
+            encoding="utf-8",
+        )
+        res, ran = self.verify(root, "--scope", "tests/ui.test.js", "--e2e-scope", "e2e/ui.e2e.ts")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertEqual(ran, "US")
+        self.assertEqual(json.loads(e2e_state_path.read_text(encoding="utf-8"))["merges_since_full_e2e"], 2)
+
+        # Merging a blast-radius branch increments counters and prints Full E2E due notice
+        default_branch = git_out(root, "rev-parse", "--abbrev-ref", "HEAD")
+        git(root, "checkout", "-q", "-b", "feat/schema")
+        self.write(root, "prisma/schema.prisma", "model User {}\n")
+        git(root, "add", "-A")
+        git(root, "commit", "-q", "-m", "schema")
+        res, ran = self.verify(root, "--full", "--e2e-scope", "e2e/auth.e2e.ts")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertEqual(ran, "TS")
+
+        git(root, "checkout", "-q", default_branch)
+        merge_res = self.merge(root, "feat/schema")
+        self.assertEqual(merge_res.returncode, 0, merge_res.stderr)
+        self.assertIn("[Baton] Full E2E due (blast-radius path merged)", merge_res.stdout)
+        state_after_merge = json.loads(e2e_state_path.read_text(encoding="utf-8"))
+        self.assertEqual(state_after_merge["merges_since_full_e2e"], 3)
+        self.assertTrue(state_after_merge["blast_radius_pending"])
+
+        # sync:reset preserves e2e-state.json
+        reset_res = subprocess.run(["node", str(BATON), "reset", "--root", str(root)], capture_output=True, text=True)
+        self.assertEqual(reset_res.returncode, 0, reset_res.stderr)
+        self.assertTrue(e2e_state_path.exists())
+        self.assertEqual(json.loads(e2e_state_path.read_text(encoding="utf-8"))["merges_since_full_e2e"], 3)
+
+        # Full --e2e resets e2e-state.json
+        res, ran = self.verify(root, "--e2e")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertEqual(ran, "TE")
+        self.assertEqual(
+            json.loads(e2e_state_path.read_text(encoding="utf-8")),
+            {"merges_since_full_e2e": 0, "tier3_since_full_e2e": 0, "blast_radius_pending": False},
+        )
 
 
 if __name__ == "__main__":

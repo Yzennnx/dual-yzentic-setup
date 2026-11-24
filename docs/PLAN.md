@@ -23,6 +23,7 @@ Provide a single-developer workflow in which Claude Code plans and writes source
    - **`P2` (Later):** Parked until P0 and P1 are done.
 3. **One task at a time:** Finish, verify with `npm run verify:agent`, and commit a task before starting the next.
 4. **Archive after completion:** When the final linked task closes, move the spec and update every roadmap link in the same commit. Follow the [spec lifecycle](specs/README.md).
+5. **Full E2E triggers:** Log `- [ ] **Task: Full E2E verification**` when Baton reports `[Baton] Full E2E due` (blast-radius path merged, `3` Tier 3 merges, or `5` total merges since the last full `--e2e` pass), when a milestone completes, or before a release build.
 
 ---
 
@@ -74,6 +75,12 @@ Active milestone: **Workflow setup complete; waiting for a project to start**
   - **Status:** Done
   - **Description:** Link approved feature tasks to specs, organize active and archived documents, and select the matching spec for review.
   - **Spec:** [Active and archived specs](specs/archive/2026-11-19-spec-lifecycle-plan.md)
+
+- [x] **Task 0.9: Scoped E2E & Triggered Full E2E**
+  - **Priority:** P0
+  - **Status:** Done
+  - **Description:** Add `--e2e-scope`, `project.verify.e2e_scoped` / `e2e_blast_radius`, and Full E2E drift/blast-radius tracking across `merge` and `sync:status`.
+  - **Spec:** [Scoped E2E & triggered full E2E](specs/archive/2026-11-24-scoped-e2e-triggers-plan.md)
 
 - [ ] **Task 1.1: Core Application Shell & Navigation**
   - **Priority:** P0

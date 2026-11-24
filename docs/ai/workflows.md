@@ -42,7 +42,7 @@ Every logic change needs covering tests that pass. Use the existing tests if the
 - `npm run sync:status` reports recorded tests owed and their owner separately from verification. Confirm coverage, then name the covered source on the scoped run, for example `npm run verify:agent -- --tier 2 --scope tests/app.test.js --covers src/app.js`. Repeat `--covers` when that test covers multiple owed paths. A pass clears only the named paths. A full suite pass alone keeps the recorded follow-up visible.
 - When the implementer owns a new test, use red-green-refactor. Write a minimal failing test, verify that it fails for the expected reason, implement the behavior, verify it passes, and refactor with green tests.
 - Verify through the baton. Use `npm run verify:agent -- --tier 2 --scope <test file>` for a covering file, and `npm run verify:agent -- --tier 3` for the tier-specific fixture or project checks. On feature branches the baton runs configured routes for the change. On the clean final tip `--full` runs the whole suite and records the merge evidence. The hook reuses a matching verification result for the same content.
-- Keep unit and component tests fast. End-to-end tests are for user journeys named in the design and live under `e2e/`. Run them through `npm run verify:agent -- --e2e` when defined for the project. The commit hook skips E2E.
+- Keep unit and component tests fast. End-to-end tests are for user journeys named in the design and live under `e2e/`. Run a changed flow through `npm run verify:agent -- --e2e-scope <spec>` when `verify.e2e_scoped` is defined, and run the full `npm run verify:agent -- --e2e` suite when Baton's blast-radius/drift triggers fire, at milestone completion, or before a release build. The commit hook skips E2E.
 - `--debug` lets you verify with temporary logging and defer eligible test writing. The next ordinary paired verification attempts the owed tests. `verify.routes`, `risky_paths`, and `no_tests_in` in the blueprint continue to control routing, tier detection, and permitted test locations.
 
 ### Independent checks
@@ -84,7 +84,7 @@ Enforced via `superpowers:systematic-debugging`:
 ### Pull Request & Pre-Merge Checklist
 Before completing a task, opening a PR, or merging into `main`:
 - [ ] **Automated Tests Green:** `npm run verify:agent -- --tier 3` passes. Do not run the suite directly.
-- [ ] **End-to-End Green:** `npm run verify:agent -- --e2e` passes, when the project defines `verify.e2e`.
+- [ ] **End-to-End Green:** `npm run verify:agent -- --e2e-scope <spec>` passes for changed user-facing flows (or `--e2e` when a Full E2E trigger is active), when the project defines `verify.e2e`.
 - [ ] **Reviewed:** The selected preset's required independent review is recorded and its findings are fixed or answered.
 - [ ] **Acceptance Criteria Met:** Feature satisfies the rules in its feature doc under [`docs/rules/features/`](../rules/README.md) and every invariant in `docs/rules/invariants.md`.
 - [ ] **The 4 UI States Handled:** Loading (skeletons), Empty, Error, and Success states verified.
